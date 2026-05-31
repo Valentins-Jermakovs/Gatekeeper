@@ -15,6 +15,7 @@ from schemas.login import LoginSchema
 # Router objekta izveide
 router = APIRouter(
     prefix="/auth",
+    tags=["Auth services"],
 )
 
 # Lietotāja login endpoints
