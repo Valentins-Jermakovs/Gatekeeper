@@ -24,11 +24,11 @@ async def login(
     username = data.username.lower()
 
     # Meklē lietotāju
-    result = await db.execute(
+    result = await db.exec(
         select(UserModel).where(UserModel.username == username)
     )
 
-    user = result.scalars().first()
+    user = result.first()
 
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -53,13 +53,13 @@ async def login(
     # ===== Access tokena izveide =====
 
     # Lietotāja lomu ieguve
-    result = await db.execute(
+    result = await db.exec(
         select(RoleModel.name)
         .join(UserRolesModel, UserRolesModel.role_id == RoleModel.id)
         .where(UserRolesModel.user_id == user.id)
     )
 
-    roles = result.scalars().all()
+    roles = result.all()
 
     access_token = await create_access_token(user_id=user.id, roles=roles)
 

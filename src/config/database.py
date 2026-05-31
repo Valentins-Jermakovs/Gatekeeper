@@ -1,5 +1,6 @@
 # Tiek importētas nepieciešamas bibliotēkas
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
@@ -19,7 +20,7 @@ engine = create_async_engine(
 
 # Izveido sesijas fabriku (Asinhroni)
 AsyncSessionLocal = sessionmaker(
-    bind=engine,
+    engine,
     class_=AsyncSession,
     expire_on_commit=False
 )

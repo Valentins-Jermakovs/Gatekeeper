@@ -17,13 +17,13 @@ async def refresh_access_token(
     # ===== Refresh tokens =====
 
     # Iegūst esošo tokenu
-    result = await db.execute(
+    result = await db.exec(
         select(RefreshTokenModel).where(
             RefreshTokenModel.refresh_token == refresh_token
         )
     )
 
-    token = result.scalars().first()
+    token = result.first()
 
     if not token:
         raise HTTPException(
@@ -43,11 +43,11 @@ async def refresh_access_token(
         )
 
     # Pārbauda lietotāju
-    user_result = await db.execute(
+    user_result = await db.exec(
         select(UserModel).where(UserModel.id == token.user_id)
     )
 
-    user = user_result.scalars().first()
+    user = user_result.first()
 
     if not user or not user.active:
         raise HTTPException(
@@ -66,13 +66,13 @@ async def refresh_access_token(
     # ===== Access tokena izveide =====
 
     # Lietotāja lomu ieguve
-    result = await db.execute(
+    result = await db.exec(
         select(RoleModel.name)
         .join(UserRolesModel, UserRolesModel.role_id == RoleModel.id)
         .where(UserRolesModel.user_id == user.id)
     )
 
-    roles = result.scalars().all()
+    roles = result.all()
 
     access_token = await create_access_token(user_id=user.id, roles=roles)
 

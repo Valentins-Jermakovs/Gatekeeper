@@ -25,22 +25,22 @@ async def registration(
     user_registration_data.email = user_registration_data.email.lower()
 
     # Pārbaude uz lietotāja eksistenci DB
-    result = await db.execute(
+    result = await db.exec(
         select(UserModel).where(UserModel.username == user_registration_data.username)
     )
     
-    existing_user = result.scalars().first()
+    existing_user = result.first()
 
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
     
 
     # Pārbaude uz e-pastu DB
-    result = await db.execute( 
+    result = await db.exec( 
         select(UserModel).where(UserModel.email == user_registration_data.email)
     )
 
-    existing_email = result.scalars().first()
+    existing_email = result.first()
 
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
@@ -60,11 +60,11 @@ async def registration(
 
     # ===== Jaunā lietotāja 'user' lomas piešķiršana =====
 
-    result = await db.execute(
+    result = await db.exec(
         select(RoleModel).where(RoleModel.name == "user")
     )
 
-    role = result.scalars().first()
+    role = result.first()
 
     if role:
         db.add(

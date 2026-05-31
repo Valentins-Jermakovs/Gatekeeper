@@ -39,14 +39,14 @@ async def delete_refresh_token(
     db: AsyncSession
 ) -> None:
 
-    result = await db.execute(
+    result = await db.exec(
         select(RefreshTokenModel).where(
             RefreshTokenModel.refresh_token == refresh_token
         )
     )
 
     # Pārbaude, vai tokenu ir izveidots
-    token_obj = result.scalars().first()
+    token_obj = result.first()
 
     # Dzēšana
     if token_obj:
@@ -60,14 +60,14 @@ async def delete_refresh_token_by_user_id(
     db: AsyncSession
 ) -> None:
     
-    result = await db.execute(
+    result = await db.exec(
         select(RefreshTokenModel).where(
             RefreshTokenModel.user_id == user_id
         )
     )
 
     # Pārbaude, vai tokenu ir izveidots
-    token_obj = result.scalars().first()
+    token_obj = result.first()
 
     # Dzēšana
     if token_obj:
