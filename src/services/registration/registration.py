@@ -2,12 +2,12 @@
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
-from src.models import User, Role, UserRoles
-from src.schemas.registration import Registration as RegistrationSchema
-from src.schemas.token import Token as TokenSchema
-from src.services.passwords.hash_password import hash_password
-from src.services.tokens.access.create_access_token import create_access_token
-from src.services.tokens.refresh.refresh_token import (
+from models import User, Role, UserRoles
+from schemas.registration import Registration as RegistrationSchema
+from schemas.token import Token as TokenSchema
+from services.passwords.hash_password import hash_password
+from services.tokens.access.create_access_token import create_access_token
+from services.tokens.refresh.refresh_token import (
     create_refresh_token,
     save_refresh_token
 )
@@ -25,22 +25,22 @@ async def registration(
     user_registration_data.email = user_registration_data.email.lower()
 
     # Pārbaude uz lietotāja eksistenci DB
-    result = await db.exec(
+    result = await db.execute(
         select(User).where(User.username == user_registration_data.username)
     )
     
-    existing_user = result.first()
+    existing_user = result.scalars().first()
 
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
     
 
     # Pārbaude uz e-pastu DB
-    result = await db.exec( 
+    result = await db.execute( 
         select(User).where(User.email == user_registration_data.email)
     )
 
-    existing_email = result.first()
+    existing_email = result.scalars().first()
 
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
@@ -60,11 +60,11 @@ async def registration(
 
     # ===== Jaunā lietotāja 'user' lomas piešķiršana =====
 
-    result = await db.exec(
+    result = await db.execute(
         select(Role).where(Role.name == "user")
     )
 
-    role = result.first()
+    role = result.scalars().first()
 
     if role:
         db.add(

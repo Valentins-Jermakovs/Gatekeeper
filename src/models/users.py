@@ -1,7 +1,7 @@
 # Importē nepieciešamas bibliotēkas
 from sqlmodel import Field, SQLModel
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime
 
 # Lietotāja modelis
 class User(SQLModel, table=True):
@@ -36,7 +36,7 @@ class User(SQLModel, table=True):
     )  
 
     created_at: datetime = Field(           # Reģistrācijas laiks
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now()
     )  
 
     active: bool = Field(                   # Lietotāja statuss

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from src.schemas.token_check import TokenCheckSchema
+from schemas.token_check import TokenCheckSchema
 from typing import Annotated
-from src.services.tokens.access.verify_access_token import verify_access_token
+from services.tokens.access.verify_access_token import verify_access_token
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.config.db_dependency import get_db
-from src.services.tokens.access.refresh_access_token import refresh_access_token
-from src.schemas.token import Token as TokenSchema
+from config.db_dependency import get_db
+from services.tokens.access.refresh_access_token import refresh_access_token
+from schemas.token import Token as TokenSchema
 
 # Router objekta izveide
 router = APIRouter(

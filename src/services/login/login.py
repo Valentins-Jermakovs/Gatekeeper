@@ -2,16 +2,16 @@
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
-from src.schemas.login import Login as LoginSchema
-from src.schemas.token import Token as TokenSchema
-from src.services.passwords.verify_password import verify_password
-from src.services.tokens.refresh.refresh_token import (
+from schemas.login import Login as LoginSchema
+from schemas.token import Token as TokenSchema
+from services.passwords.verify_password import verify_password
+from services.tokens.refresh.refresh_token import (
     delete_refresh_token_by_user_id,
     create_refresh_token,
     save_refresh_token
 )
-from src.services.tokens.access.create_access_token import create_access_token
-from src.models import User, Role, UserRoles
+from services.tokens.access.create_access_token import create_access_token
+from models import User, Role, UserRoles
 
 
 # Metode priekš login
@@ -24,17 +24,17 @@ async def login(
     username = data.username.lower()
 
     # Meklē lietotāju
-    result = await db.exec(
+    result = await db.execute(
         select(User).where(User.username == username)
     )
 
-    user = result.first()
+    user = result.scalars().first()
 
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Paroles pārbaude
-    if not verify_password(data.password, user.hashed_password):
+    if not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Pārbauda, vai lietotājs nav bloķēts
@@ -53,13 +53,13 @@ async def login(
     # ===== Access tokena izveide =====
 
     # Lietotāja lomu ieguve
-    result = await db.exec(
+    result = await db.execute(
         select(Role.name)
         .join(UserRoles, UserRoles.role_id == Role.id)
         .where(UserRoles.user_id == user.id)
     )
 
-    roles = result.all()
+    roles = result.scalars().all()
 
     access_token = await create_access_token(user_id=user.id, roles=roles)
 

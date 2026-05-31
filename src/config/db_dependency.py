@@ -1,5 +1,5 @@
 # Importē sesijas fabriku
-from src.config.database import AsyncSessionLocal
+from .database import AsyncSessionLocal
 
 # Asinhronas sesijas izveide
 async def get_db():

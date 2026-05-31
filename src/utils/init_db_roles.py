@@ -1,7 +1,7 @@
 # Importē bibliotēkas un modeļus
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.models import UserRoles
+from models import Role
 
 # Šī utilīta inicializē lomas
 async def init_roles(engine):
@@ -17,7 +17,7 @@ async def init_roles(engine):
         }
 
         # Pārbaude vai lomas ir inicializētas
-        result = await session.exec(select(UserRoles))
+        result = await session.exec(select(Role))
         existing_roles = result.all()
 
         # Ja lomas ir inicializētas -> izlaiž
@@ -27,7 +27,7 @@ async def init_roles(engine):
         # Inicializē lomas
         for role_name, role_description in roles.items():
             session.add(
-                UserRoles(
+                Role(
                     name=role_name,
                     description=role_description
                 )

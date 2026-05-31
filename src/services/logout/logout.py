@@ -1,6 +1,6 @@
 # Bibliotēku importi
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.services.tokens.refresh.refresh_token import delete_refresh_token
+from services.tokens.refresh.refresh_token import delete_refresh_token
 
 
 # Metode priekš logout

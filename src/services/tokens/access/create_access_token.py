@@ -1,5 +1,5 @@
 # Importē bibliotēkas
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from jose import jwt
 import os
@@ -40,14 +40,14 @@ async def create_access_token(
     }
 
     # Aprēķina, kad tokens beigsies
-    expire = datetime.now(timezone.utc) + (
+    expire = datetime.now() + (
         timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
     # Tokena papildināšana - laiki
     to_encode.update({
         "exp": int(expire.timestamp()),
-        "iat": int(datetime.now(timezone.utc).timestamp())
+        "iat": int(datetime.now().timestamp())
     })
 
     # Atgriež tokenu

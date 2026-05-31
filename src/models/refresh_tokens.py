@@ -1,6 +1,6 @@
 # Importē nepieciešamas bibliotēkas
 from sqlmodel import Field, SQLModel
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 # Refresh tokena modelis
 class RefreshToken(SQLModel, table=True):
@@ -19,10 +19,10 @@ class RefreshToken(SQLModel, table=True):
     
     # Laika iestatījumi
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now()
     )
     expires_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=7)
+        default_factory=lambda: datetime.now() + timedelta(days=7)
     )
 
 

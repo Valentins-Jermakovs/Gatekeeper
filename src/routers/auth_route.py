@@ -1,15 +1,15 @@
 # Bibliotēku, shēmu, servisu imports
 from fastapi import APIRouter, Depends
-from src.schemas.token import Token as TokenSchema
+from schemas.token import Token as TokenSchema
 from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.config.db_dependency import get_db
-from src.schemas.login import Login as LoginSchema
-from src.services.login import login as login_user
-from src.schemas.registration import Registration as RegistrationSchema
-from src.services.registration import registration as register_user
-from src.services.logout import logout
+from config.db_dependency import get_db
+from schemas.login import Login as LoginSchema
+from services.login.login import login as login_user
+from schemas.registration import Registration as RegistrationSchema
+from services.registration.registration import registration as register_user
+from services.logout.logout import logout
 
 # Router objekta izveide
 router = APIRouter(
@@ -44,7 +44,7 @@ async def user_registration_endpoint(
     data: RegistrationSchema,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    return await register_user(data=data, db=db)
+    return await register_user(user_registration_data=data, db=db)
 
 
 # Logout enpoints

@@ -1,12 +1,12 @@
 from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
-from datetime import datetime, timezone
-from src.models import User, Token
-from src.services.tokens.refresh.refresh_token import create_refresh_token, save_refresh_token
-from src.schemas.token import Token as TokenRefreshSchema
-from src.services.tokens.access.create_access_token import create_access_token
-from src.models import UserRoles, Role
+from datetime import datetime
+from models import User, RefreshToken
+from services.tokens.refresh.refresh_token import create_refresh_token, save_refresh_token
+from schemas.token import Token as TokenRefreshSchema
+from services.tokens.access.create_access_token import create_access_token
+from models import UserRoles, Role
 
 # Tokenu atjaunošanas mehānisms
 async def refresh_access_token(
@@ -17,13 +17,13 @@ async def refresh_access_token(
     # ===== Refresh tokens =====
 
     # Iegūst esošo tokenu
-    result = await db.exec(
-        select(Token).where(
-            Token.refresh_token == refresh_token
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.refresh_token == refresh_token
         )
     )
 
-    token = result.first()
+    token = result.scalars().first()
 
     if not token:
         raise HTTPException(
@@ -32,10 +32,8 @@ async def refresh_access_token(
         )
 
     # Tokena pārbaude
-    expires_at = token.expires_at.replace(tzinfo=timezone.utc)
-
     # Ja beidzas termiņš
-    if expires_at < datetime.now(timezone.utc):
+    if token.expires_at < datetime.now():
         await db.delete(token)
         await db.commit()
 
@@ -45,11 +43,11 @@ async def refresh_access_token(
         )
 
     # Pārbauda lietotāju
-    user_result = await db.exec(
+    user_result = await db.execute(
         select(User).where(User.id == token.user_id)
     )
 
-    user = user_result.first()
+    user = user_result.scalars().first()
 
     if not user or not user.active:
         raise HTTPException(
@@ -68,13 +66,13 @@ async def refresh_access_token(
     # ===== Access tokena izveide =====
 
     # Lietotāja lomu ieguve
-    result = await db.exec(
+    result = await db.execute(
         select(Role.name)
         .join(UserRoles, UserRoles.role_id == Role.id)
         .where(UserRoles.user_id == user.id)
     )
 
-    roles = result.all()
+    roles = result.scalars().all()
 
     access_token = await create_access_token(user_id=user.id, roles=roles)
 

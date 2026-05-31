@@ -2,7 +2,7 @@
 import secrets
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.models import RefreshToken
+from models import RefreshToken
 
 
 # Metode izveido refresh tokenu
@@ -39,14 +39,14 @@ async def delete_refresh_token(
     db: AsyncSession
 ) -> None:
 
-    result = await db.exec(
+    result = await db.execute(
         select(RefreshToken).where(
             RefreshToken.refresh_token == refresh_token
         )
     )
 
     # Pārbaude, vai tokenu ir izveidots
-    token_obj = result.first()
+    token_obj = result.scalars().first()
 
     # Dzēšana
     if token_obj:
@@ -60,14 +60,14 @@ async def delete_refresh_token_by_user_id(
     db: AsyncSession
 ) -> None:
     
-    result = await db.exec(
+    result = await db.execute(
         select(RefreshToken).where(
             RefreshToken.user_id == user_id
         )
     )
 
     # Pārbaude, vai tokenu ir izveidots
-    token_obj = result.first()
+    token_obj = result.scalars().first()
 
     # Dzēšana
     if token_obj:

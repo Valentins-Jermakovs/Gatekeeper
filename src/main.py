@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 import os
 from dotenv import load_dotenv
-from src.utils.init_db import init_db
-from .routers import auth_route, verify_route
+from utils.init_db import init_db
+from routers import auth_route, verify_route
 
 
 @asynccontextmanager
