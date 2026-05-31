@@ -1,6 +1,6 @@
 # Gatekeeper
 
-> **Gatekeeper** is a lightweight auth service built with FastAPI, SQLModel and PostgreSQL. It provides registration, login, logout, token refresh, and role-based access support in a clean async architecture.
+> **Gatekeeper** is a lightweight auth service built with FastAPI, SQLModel and PostgreSQL. It provides registration, login, logout, token refresh, and async architecture.
 
 ---
 
