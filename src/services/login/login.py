@@ -11,7 +11,7 @@ from src.services.tokens.refresh.refresh_token import (
     save_refresh_token
 )
 from src.services.tokens.access.create_access_token import create_access_token
-from src.models import User, Role, UserRoles, RefreshToken
+from src.models import User, Role, UserRoles
 
 
 # Metode priekš login
@@ -65,6 +65,5 @@ async def login(
 
     return TokenSchema(
         access_token=access_token,
-        token_type="bearer",
         refresh_token=new_refresh_token
     )
