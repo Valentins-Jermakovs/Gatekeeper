@@ -28,8 +28,7 @@ except ValueError:
 # Metode access tokena veidošanai
 async def create_access_token(
     user_id: int,
-    roles: list[str],
-    expires_delta: timedelta | None = None
+    roles: list[str]
 ) -> str:
 
     # Kodē tokenā:
@@ -42,7 +41,7 @@ async def create_access_token(
 
     # Aprēķina, kad tokens beigsies
     expire = datetime.now(timezone.utc) + (
-        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
     # Tokena papildināšana - laiki

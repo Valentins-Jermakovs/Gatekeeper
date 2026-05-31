@@ -1,6 +1,5 @@
 # Importē bibliotēkas, modeļus
 import secrets
-from datetime import datetime, timedelta, timezone
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.models import RefreshToken
@@ -34,7 +33,7 @@ async def save_refresh_token(
     return token
 
 
-# Metode, lai izdzēst refresh tokenu
+# Metode, lai izdzēst refresh tokenu - pēc tokena
 async def delete_refresh_token(
     refresh_token: str,
     db: AsyncSession
@@ -43,6 +42,27 @@ async def delete_refresh_token(
     result = await db.exec(
         select(RefreshToken).where(
             RefreshToken.refresh_token == refresh_token
+        )
+    )
+
+    # Pārbaude, vai tokenu ir izveidots
+    token_obj = result.first()
+
+    # Dzēšana
+    if token_obj:
+        await db.delete(token_obj)
+        await db.commit()
+
+
+# Metode, lai izdzēst refresh tokenu, pēc lietotāja id
+async def delete_refresh_token_by_user_id(
+    user_id: int,
+    db: AsyncSession
+) -> None:
+    
+    result = await db.exec(
+        select(RefreshToken).where(
+            RefreshToken.user_id == user_id
         )
     )
 
