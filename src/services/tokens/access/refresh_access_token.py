@@ -2,24 +2,24 @@ from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from datetime import datetime
-from models import User, RefreshToken
+from models import UserModel, RefreshTokenModel
 from services.tokens.refresh.refresh_token import create_refresh_token, save_refresh_token
-from schemas.token import Token as TokenRefreshSchema
+from schemas.token import TokenSchema
 from services.tokens.access.create_access_token import create_access_token
-from models import UserRoles, Role
+from models import UserRolesModel, RoleModel
 
 # Tokenu atjaunošanas mehānisms
 async def refresh_access_token(
     refresh_token: str,
     db: AsyncSession
-) -> TokenRefreshSchema:
+) -> TokenSchema:
 
     # ===== Refresh tokens =====
 
     # Iegūst esošo tokenu
     result = await db.execute(
-        select(RefreshToken).where(
-            RefreshToken.refresh_token == refresh_token
+        select(RefreshTokenModel).where(
+            RefreshTokenModel.refresh_token == refresh_token
         )
     )
 
@@ -44,7 +44,7 @@ async def refresh_access_token(
 
     # Pārbauda lietotāju
     user_result = await db.execute(
-        select(User).where(User.id == token.user_id)
+        select(UserModel).where(UserModel.id == token.user_id)
     )
 
     user = user_result.scalars().first()
@@ -67,16 +67,16 @@ async def refresh_access_token(
 
     # Lietotāja lomu ieguve
     result = await db.execute(
-        select(Role.name)
-        .join(UserRoles, UserRoles.role_id == Role.id)
-        .where(UserRoles.user_id == user.id)
+        select(RoleModel.name)
+        .join(UserRolesModel, UserRolesModel.role_id == RoleModel.id)
+        .where(UserRolesModel.user_id == user.id)
     )
 
     roles = result.scalars().all()
 
     access_token = await create_access_token(user_id=user.id, roles=roles)
 
-    return TokenRefreshSchema(
+    return TokenSchema(
         access_token=access_token,
         refresh_token=new_refresh_token
     )

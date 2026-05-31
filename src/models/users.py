@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime
 
 # Lietotāja modelis
-class User(SQLModel, table=True):
+class UserModel(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "users"

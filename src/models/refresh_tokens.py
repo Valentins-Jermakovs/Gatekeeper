@@ -3,7 +3,7 @@ from sqlmodel import Field, SQLModel
 from datetime import datetime, timedelta
 
 # Refresh tokena modelis
-class RefreshToken(SQLModel, table=True):
+class RefreshTokenModel(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "refresh_tokens"

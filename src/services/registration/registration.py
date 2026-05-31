@@ -2,9 +2,9 @@
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
-from models import User, Role, UserRoles
-from schemas.registration import Registration as RegistrationSchema
-from schemas.token import Token as TokenSchema
+from models import UserModel, RoleModel, UserRolesModel
+from schemas.registration import RegistrationSchema
+from schemas.token import TokenSchema
 from services.passwords.hash_password import hash_password
 from services.tokens.access.create_access_token import create_access_token
 from services.tokens.refresh.refresh_token import (
@@ -26,7 +26,7 @@ async def registration(
 
     # Pārbaude uz lietotāja eksistenci DB
     result = await db.execute(
-        select(User).where(User.username == user_registration_data.username)
+        select(UserModel).where(UserModel.username == user_registration_data.username)
     )
     
     existing_user = result.scalars().first()
@@ -37,7 +37,7 @@ async def registration(
 
     # Pārbaude uz e-pastu DB
     result = await db.execute( 
-        select(User).where(User.email == user_registration_data.email)
+        select(UserModel).where(UserModel.email == user_registration_data.email)
     )
 
     existing_email = result.scalars().first()
@@ -48,7 +48,7 @@ async def registration(
 
     # ===== Jaunā lietotāja reģistrācija =====
     
-    new_user = User(
+    new_user = UserModel(
         username=user_registration_data.username,
         email=user_registration_data.email,
         password_hash=await hash_password(user_registration_data.password)
@@ -61,14 +61,14 @@ async def registration(
     # ===== Jaunā lietotāja 'user' lomas piešķiršana =====
 
     result = await db.execute(
-        select(Role).where(Role.name == "user")
+        select(RoleModel).where(RoleModel.name == "user")
     )
 
     role = result.scalars().first()
 
     if role:
         db.add(
-            UserRoles(
+            UserRolesModel(
                 user_id=new_user.id, 
                 role_id=role.id
             )

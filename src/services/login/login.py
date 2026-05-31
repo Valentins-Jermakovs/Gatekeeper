@@ -2,8 +2,8 @@
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
-from schemas.login import Login as LoginSchema
-from schemas.token import Token as TokenSchema
+from schemas.login import LoginSchema
+from schemas.token import TokenSchema
 from services.passwords.verify_password import verify_password
 from services.tokens.refresh.refresh_token import (
     delete_refresh_token_by_user_id,
@@ -11,7 +11,7 @@ from services.tokens.refresh.refresh_token import (
     save_refresh_token
 )
 from services.tokens.access.create_access_token import create_access_token
-from models import User, Role, UserRoles
+from models import UserModel, RoleModel, UserRolesModel
 
 
 # Metode priekš login
@@ -25,7 +25,7 @@ async def login(
 
     # Meklē lietotāju
     result = await db.execute(
-        select(User).where(User.username == username)
+        select(UserModel).where(UserModel.username == username)
     )
 
     user = result.scalars().first()
@@ -54,9 +54,9 @@ async def login(
 
     # Lietotāja lomu ieguve
     result = await db.execute(
-        select(Role.name)
-        .join(UserRoles, UserRoles.role_id == Role.id)
-        .where(UserRoles.user_id == user.id)
+        select(RoleModel.name)
+        .join(UserRolesModel, UserRolesModel.role_id == RoleModel.id)
+        .where(UserRolesModel.user_id == user.id)
     )
 
     roles = result.scalars().all()

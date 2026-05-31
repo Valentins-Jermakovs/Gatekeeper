@@ -2,7 +2,7 @@
 from pydantic import BaseModel, Field, EmailStr
 
 # Reģistrācijas formas validācijas shēma
-class Registration(BaseModel):
+class RegistrationSchema(BaseModel):
 
     # Lietotājvārds
     username: str = Field(min_length=1, max_length=50)

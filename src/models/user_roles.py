@@ -2,7 +2,7 @@
 from sqlmodel import Field, SQLModel
 
 # Lietotāju un lomu savienojuma modelis
-class UserRoles(SQLModel, table=True):
+class UserRolesModel(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "user_roles"

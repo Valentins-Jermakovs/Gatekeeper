@@ -2,7 +2,7 @@
 from sqlmodel import Field, SQLModel
 
 # Roles (lomas) modelis
-class Role(SQLModel, table=True):
+class RoleModel(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "roles"

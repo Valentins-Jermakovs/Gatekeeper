@@ -3,7 +3,7 @@ from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
 from dotenv import load_dotenv
 import os
-from models import UserRoles, RefreshToken, User, Role
+from models import UserRolesModel, RefreshTokenModel, UserModel, RoleModel
 from utils.init_db_roles import init_roles
 
 # Ielādē dotenv failu, lai varētu izmantot DATABASE_URL

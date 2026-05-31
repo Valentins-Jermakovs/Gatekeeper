@@ -1,15 +1,16 @@
 # Bibliotēku, shēmu, servisu imports
 from fastapi import APIRouter, Depends
-from schemas.token import Token as TokenSchema
+from schemas.token import TokenSchema
 from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
 from sqlmodel.ext.asyncio.session import AsyncSession
 from config.db_dependency import get_db
-from schemas.login import Login as LoginSchema
-from services.login.login import login as login_user
-from schemas.registration import Registration as RegistrationSchema
 from services.registration.registration import registration as register_user
 from services.logout.logout import logout
+from services.login.login import login as login_user
+from schemas.registration import RegistrationSchema
+from schemas.login import LoginSchema
+
 
 # Router objekta izveide
 router = APIRouter(

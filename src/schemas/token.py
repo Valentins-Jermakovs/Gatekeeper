@@ -2,7 +2,7 @@
 from pydantic import BaseModel
 
 # Shēma tokenam
-class Token(BaseModel):
+class TokenSchema(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
