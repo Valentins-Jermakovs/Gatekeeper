@@ -30,12 +30,6 @@ class User(SQLModel, table=True):
         unique=True
     )  
 
-    google_id: Optional[str] = Field(       # Google OAuth ID
-        default=None, 
-        index=True, 
-        unique=True
-    )  
-
     auth_provider: str = Field(             # Auth provider
         default="local", 
         max_length=20
