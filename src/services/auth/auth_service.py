@@ -134,8 +134,6 @@ async def google_auth_callback(
 
     access_token = await token_service.create_access_token(user_id=user.id, roles=roles)
 
-    print("Access token:", access_token)
-
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token_value
