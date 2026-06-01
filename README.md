@@ -19,14 +19,6 @@
 
 - `Python 3.12` • `FastAPI` • `SQLModel` • `SQLAlchemy AsyncIO` • `PostgreSQL` • `Uvicorn` • `Docker` • `Docker Compose`
 
-### Tech tags
-
-`Python` `FastAPI` `SQLModel` `PostgreSQL` `OAuth2` `JWT` `Docker` `Compose` `asyncpg`
-
-### Architecture illustration
-
-![Architecture illustration](./illustration.png)
-
 ---
 
 ## Project structure
