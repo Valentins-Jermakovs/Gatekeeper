@@ -2,7 +2,7 @@
 #                               imports
 # =========================================================================
 # Bibliotēkas:
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.security import (
     OAuth2PasswordRequestForm, 
     HTTPBearer, 
@@ -10,6 +10,10 @@ from fastapi.security import (
 )
 from typing import Annotated
 from sqlmodel.ext.asyncio.session import AsyncSession
+from authlib.integrations.starlette_client import OAuth
+import os
+from urllib.parse import urlencode
+from starlette.responses import RedirectResponse
 # Dependencies:
 from config.db_dependency import get_db
 # Servisi:
@@ -36,6 +40,60 @@ router = APIRouter(
 # =========================================================================
 #                               Endpoints
 # =========================================================================
+
+
+# ===================== Google endpoints ==================================
+
+# http://localhost:8000/auth/google/login
+
+oauth = OAuth()
+
+CONF_URL = "https://accounts.google.com/.well-known/openid-configuration"
+
+oauth.register(
+    name="google",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url=CONF_URL,
+    client_kwargs={
+        "scope": "openid email profile",
+    },
+)
+
+@router.get("/google/login")
+async def get_google_login(request: Request):
+
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    return await oauth.google.authorize_redirect(
+        request,
+        redirect_uri
+    )
+
+
+@router.get("/google/callback")
+async def google_auth_handler(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    '''
+    Handle Google callback
+    '''
+    tokens = await auth.google_auth_callback(oauth, db, request)
+
+    frontend_url = os.getenv(
+        "FRONTEND_URL",
+        "http://localhost:5173/login"
+    )
+
+    query = urlencode({
+        "access_token": tokens.access_token,
+        "refresh_token": tokens.refresh_token,
+    })
+
+    return RedirectResponse(
+        url=f"{frontend_url}?{query}",
+        status_code=303
+    )
 
 # ===================== Lietotāja login endpoints =========================
 

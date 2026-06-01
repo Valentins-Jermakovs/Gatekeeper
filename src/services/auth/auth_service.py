@@ -2,6 +2,8 @@
 #                                imports
 # =========================================================================
 # Bibliotēkas:
+from fastapi import Request
+from authlib.integrations.starlette_client import OAuth
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
@@ -15,7 +17,7 @@ from schemas import (
 import services.password.password_service as password_service
 import services.tokens.token_service as token_service
 # Modeļi
-from models import User, Role, UserRoles
+from models import User, Role, UserRoles, RefreshToken
 # =========================================================================
 
 
@@ -23,7 +25,122 @@ from models import User, Role, UserRoles
 #                               Biznesa loģika
 # =========================================================================
 
-# Lietotāja reģistrācijas metode
+
+# ============================ Google ======================================
+async def google_auth_callback(
+    oauth: OAuth,
+    db: AsyncSession,
+    request: Request
+) -> TokenResponse:
+
+    # Iegūst tokenu no Google
+    token = await oauth.google.authorize_access_token(request)
+    user_info = token["userinfo"]
+
+    email = user_info["email"]
+    google_id = user_info["sub"]
+
+
+    # Meklē lietotaju pēc google_id
+    result = await db.exec(
+        select(User).where(User.google_id == google_id)
+    )
+    user = result.first()
+
+    if user and not user.active:
+        raise HTTPException(status_code=401, detail="User is inactive")
+
+    
+    # Ja nav -> meklē pēc email
+    if not user:
+        result = await db.exec(
+            select(User).where(User.email == email)
+        )
+        user = result.first()
+
+        if user and not user.active:
+            raise HTTPException(status_code=401, detail="User is inactive")
+
+    # Lietotāja izveide vai atjaunošana
+    if user:
+        user.google_id = google_id
+        user.auth_provider = "google"
+    else:
+        user = User(
+            email=email,
+            google_id=google_id,
+            auth_provider="google",
+            username=None,
+            password_hash=None,
+            active=True,
+        )
+
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+        # ===== Jaunā lietotāja 'user' lomas piešķiršana =====
+
+        result = await db.exec(
+            select(Role).where(Role.name == "user")
+        )
+
+        role = result.first()
+
+        if role:
+            db.add(
+                UserRoles(
+                    user_id=user.id, 
+                    role_id=role.id
+                )
+            )
+            await db.commit()
+
+    # Ja lietotājs nav atjaunots, izlaiž
+    await db.commit()
+    await db.refresh(user)
+
+    # Veco tokenu dzēšana
+    result = await db.exec(
+        select(RefreshToken).where(RefreshToken.user_id == user.id)
+    )
+    old_tokens = result.all()
+
+    for t in old_tokens:
+        await db.delete(t)
+
+    await db.commit()
+
+
+    # Toķenu ģenerācija
+    refresh_token_value = await token_service.create_refresh_token()
+
+    await token_service.save_refresh_token(
+        refresh_token=refresh_token_value,
+        user_id=user.id,
+        db=db
+    )
+
+    # ===== Access tokena izveide =====
+
+    # Lietotāja lomu ieguve
+    result = await db.exec(
+        select(Role.name)
+        .join(UserRoles, UserRoles.role_id == Role.id)
+        .where(UserRoles.user_id == user.id)
+    )
+
+    roles = result.all()
+
+    access_token = await token_service.create_access_token(user_id=user.id, roles=roles)
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token_value
+    )
+
+
+# ================= Lietotāja reģistrācijas metode ========================
 async def register_user(
     db: AsyncSession, 
     user_registration_data: RegistrationRequest
@@ -102,7 +219,7 @@ async def register_user(
     )
 
 
-# Metode priekš login
+# ========================= Lietotāja login ================================
 async def authenticate_user(
     db: AsyncSession,
     data: LoginRequest
@@ -160,7 +277,7 @@ async def authenticate_user(
     )
 
 
-# Metode priekš logout
+# ========================= Lietotāja logout =================================
 async def logout_user(
     db: AsyncSession,
     refresh_token: str,
