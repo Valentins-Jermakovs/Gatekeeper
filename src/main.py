@@ -19,10 +19,10 @@ async def lifespan(app: FastAPI):
     await init_db()
     yield
 
-# FastAPI objekta izveide
+# FastAPI object
 app = FastAPI(lifespan=lifespan)
 
-# Nolasa .env faila saturu
+# Session middleware
 load_dotenv()
 
 secret_key = os.getenv("SECRET_KEY")

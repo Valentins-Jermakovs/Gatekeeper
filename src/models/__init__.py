@@ -1,8 +1,8 @@
 # =====================================================
-#       Modeļu imports globālai reģistrācijai
+#                       imports
 # =====================================================
-from .refresh_token import RefreshToken     # Refresh tokenu modelis
-from .role import Role                      # Roles (lomas) modelis
-from .user import User                      # Lietotāja modelis
-from .user_role import UserRoles            # Lietotāju un lomu savienojuma modelis
+from .refresh_token import RefreshToken     # Refresh token model
+from .role import Role                      # Roles model
+from .user import User                      # User model
+from .user_role import UserRoles            # User roles model
 # =====================================================

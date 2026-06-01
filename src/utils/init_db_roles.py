@@ -7,30 +7,30 @@ from models import Role
 # ====================================================
 
 # ====================================================
-#           Lomu inicializācijas utilīta
+#           Roles initialization
 # =====================================================
 
 async def init_roles(engine):
 
-    # Darbs ar DB, sesijas izveide
+    # Session creation
     async with AsyncSession(engine) as session:
 
-        # Lomas
+        # Roles definitions
         roles = {
             "user": "User can register, login and manage only own data",
             "admin": "Administrator have full system access",
             "manager": "Manager create system content",
         }
 
-        # Pārbaude vai lomas ir inicializētas
+        # Check if roles are already initialized
         result = await session.exec(select(Role))
         existing_roles = result.all()
 
-        # Ja lomas ir inicializētas -> izlaiž
+        # If roles are already initialized -> exit
         if existing_roles:
             return
 
-        # Inicializē lomas
+        # Else create roles
         for role_name, role_description in roles.items():
             session.add(
                 Role(
@@ -39,5 +39,5 @@ async def init_roles(engine):
                 )
             )
 
-        # Saglabā izmaiņas
+        # Commit
         await session.commit()

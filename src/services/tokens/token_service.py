@@ -1,7 +1,7 @@
 # =====================================================
 #                       imports
 # =====================================================
-# Bibliotēkas:
+# Libraries:
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from jose import jwt, JWTError, ExpiredSignatureError
@@ -10,9 +10,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 import secrets
 import os
-# Shēmas:
+# Schemas:
 from schemas import TokenResponse
-# Modeļi:
+# Models:
 from models import RefreshToken, User, UserRoles, Role
 # =====================================================
 
@@ -21,9 +21,10 @@ from models import RefreshToken, User, UserRoles, Role
 #               .env
 # =======================================
 
-# Nolasa .env faila saturu
+# Read .env file
 load_dotenv()
 
+# Save .env variables
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY nav iestatīts .env failā")
@@ -34,55 +35,52 @@ try:
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "20"))
 except ValueError:
     ACCESS_TOKEN_EXPIRE_MINUTES = 20
-
 # =======================================
 
 
 # =======================================================
-#                   Biznesa loģika
+#                   Business logic
 # =======================================================
 # =======================================================
-#                   Access tokens
+#                   Access token
 # =======================================================
 
-# Metode access tokena veidošanai
+# Function for creating access token
 async def create_access_token(
     user_id: int,
     roles: list[str]
 ) -> str:
 
-    # Kodē tokenā:
-    #   * lietotāja identifikatoru
-    #   * lomas
+    # Write info to token:
+    #   * user_id
+    #   * roles
     to_encode = {
         "sub": str(user_id),
         "roles": roles
     }
 
-    # Aprēķina, kad tokens beigsies
+    # Compute token expiration
     expire = datetime.now() + (
         timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
-    # Tokena papildināšana - laiki
+    # Add token expiration
     to_encode.update({
         "exp": int(expire.timestamp()),
         "iat": int(datetime.now().timestamp())
     })
 
-    # Atgriež tokenu
+    # Encode token
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-# Tokenu atjaunošanas mehānisms
+# Function for refreshing access token
 async def refresh_access_token(
     refresh_token: str,
     db: AsyncSession
 ) -> TokenResponse:
 
-    # ===== Refresh tokens =====
-
-    # Iegūst esošo tokenu
+    # Get existing refresh token
     result = await db.exec(
         select(RefreshToken).where(
             RefreshToken.refresh_token == refresh_token
@@ -97,8 +95,8 @@ async def refresh_access_token(
             detail="Invalid refresh token"
         )
 
-    # Tokena pārbaude
-    # Ja beidzas termiņš
+    # Token signature check
+    # If token has expired
     if token.expires_at < datetime.now():
         await db.delete(token)
         await db.commit()
@@ -108,7 +106,7 @@ async def refresh_access_token(
             detail="Refresh token expired"
         )
 
-    # Pārbauda lietotāju
+    # User check
     user_result = await db.exec(
         select(User).where(User.id == token.user_id)
     )
@@ -121,17 +119,17 @@ async def refresh_access_token(
             detail="User inactive"
         )
 
-    # Tokenu rotācija
+    # Token delete
     await db.delete(token)
     await db.commit()
 
-    # Jauno tokenu izveide
+    # Create new refresh token
     new_refresh_token = await create_refresh_token()
     await save_refresh_token(new_refresh_token, token.user_id, db)
 
-    # ===== Access tokena izveide =====
+    # Access token create
 
-    # Lietotāja lomu ieguve
+    # Get user roles
     result = await db.exec(
         select(Role.name)
         .join(UserRoles, UserRoles.role_id == Role.id)
@@ -148,10 +146,10 @@ async def refresh_access_token(
     )
 
 
-# Metode access tokena validācijai
+# Function for checking access token
 async def verify_access_token(token: str) -> dict:
     try:
-        # Pārbauda, vai token ir derīgs
+        # Decode token
         payload = jwt.decode(
             token, 
             SECRET_KEY, 
@@ -160,12 +158,12 @@ async def verify_access_token(token: str) -> dict:
 
         return payload
     
-    # Kļūdu apstrāde
-    # Ja tokens nav derīgs
+    # Error handling
+    # If token has expired
     except ExpiredSignatureError as e:
         raise HTTPException(status_code=401, detail="Token has expired")
     
-    # Ja tokena signatūra nav derīga
+    # If token is invalid
     except JWTError as e:
         raise HTTPException(status_code=401, detail="Invalid token")
     
@@ -173,35 +171,34 @@ async def verify_access_token(token: str) -> dict:
 #                   Refresh tokens
 # =======================================================
 
-# Metode izveido refresh tokenu
+# Function for creating refresh token
 async def create_refresh_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-# Metode refresh tokena saglabāšanai
+# Function for saving refresh token
 async def save_refresh_token(
     refresh_token: str,
     user_id: int,
     db: AsyncSession,
 ) -> RefreshToken:
 
-    # Tokena izveide
+    # Token object
     token = RefreshToken(
         user_id=user_id,
         refresh_token=refresh_token,
     )
 
-    # Darbs ar DB
+    # Save token
     db.add(token)
 
     await db.commit()
     await db.refresh(token)
 
-    # Atgriež tokenu
     return token
 
 
-# Metode, lai izdzēst refresh tokenu - pēc tokena
+# Function for deleting refresh token
 async def delete_refresh_token(
     refresh_token: str,
     db: AsyncSession
@@ -213,16 +210,16 @@ async def delete_refresh_token(
         )
     )
 
-    # Pārbaude, vai tokenu ir izveidots
+    # Check if token exists
     token_obj = result.first()
 
-    # Dzēšana
+    # Delete
     if token_obj:
         await db.delete(token_obj)
         await db.commit()
 
 
-# Metode, lai izdzēst refresh tokenu, pēc lietotāja id
+# Function for deleting refresh token by user id
 async def delete_refresh_token_by_user_id(
     user_id: int,
     db: AsyncSession
@@ -234,10 +231,10 @@ async def delete_refresh_token_by_user_id(
         )
     )
 
-    # Pārbaude, vai tokenu ir izveidots
+    # Check if token exists
     token_obj = result.first()
 
-    # Dzēšana
+    # Delete
     if token_obj:
         await db.delete(token_obj)
         await db.commit()

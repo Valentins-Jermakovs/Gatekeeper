@@ -4,12 +4,12 @@
 from sqlmodel import Field, SQLModel
 # =====================================================
 
-# Lietotāju un lomu savienojuma modelis
+# User Role model
 class UserRoles(SQLModel, table=True):
 
-    # Tabulas nosaukums
+    # Table name
     __tablename__ = "user_roles"
 
-    # Foreign atslēgas
+    # Foreign keys
     user_id: int = Field(foreign_key="users.id", primary_key=True)
     role_id: int = Field(foreign_key="roles.id", primary_key=True)

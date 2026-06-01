@@ -1,7 +1,7 @@
 # =========================================================================
 #                               imports
 # =========================================================================
-# Bibliotēkas:
+# Libraries:
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import (
     OAuth2PasswordRequestForm, 
@@ -16,9 +16,9 @@ from urllib.parse import urlencode
 from starlette.responses import RedirectResponse
 # Dependencies:
 from config.db_dependency import get_db
-# Servisi:
+# Services:
 import services.auth.auth_service as auth
-# Shēmas:
+# Schemas:
 from schemas import (
     LoginRequest, 
     RegistrationRequest, 
@@ -31,7 +31,7 @@ from schemas import (
 #                                Router
 # =========================================================================
 
-# Router objekta izveide
+# Router object
 router = APIRouter(
     prefix="/auth",
     tags=["Auth services"],
@@ -44,7 +44,7 @@ router = APIRouter(
 
 # ===================== Google endpoints ==================================
 
-# http://localhost:8000/auth/google/login - Google login
+# http://localhost:8000/auth/google/login - Google login for testing
 
 oauth = OAuth()
 
@@ -76,14 +76,12 @@ async def google_auth_handler(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     
-    
     token = await auth.google_auth_callback(
         oauth=oauth,
         db=db,
         request=request
     )
     
-
     frontend_url = os.getenv(
         "FRONTEND_URL",
         "http://localhost:5173/login"
@@ -99,7 +97,7 @@ async def google_auth_handler(
         status_code=303
     )
 
-# ===================== Lietotāja login endpoints =========================
+# ===================== User login endpoint =========================
 
 @router.post(
     "/login",
@@ -118,7 +116,7 @@ async def user_login_endpoint(
     return await auth.authenticate_user(db=db, data=data)
 
 
-# ================ Lietotāja reģistrācijas endpoints ======================
+# ================ User registration endpoint ======================
 @router.post(
     "/register",
     summary="Create a new user",
@@ -131,7 +129,7 @@ async def user_registration_endpoint(
     return await auth.register_user(user_registration_data=data, db=db)
 
 
-# ======================== Logout enpoints ================================
+# ======================== Logout endpoint ================================
 logout_scheme = HTTPBearer()
 
 @router.post(

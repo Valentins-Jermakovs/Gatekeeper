@@ -1,28 +1,28 @@
 # =========================================================================
 #                                imports
 # =========================================================================
-# Bibliotēkas:
+# Libraries:
 from fastapi import Request
 from authlib.integrations.starlette_client import OAuth
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
-# Shēmas:
+# Schemas:
 from schemas import (
     LoginRequest, 
     RegistrationRequest,
     TokenResponse, 
 )
-# Servisi
+# Services:
 import services.password.password_service as password_service
 import services.tokens.token_service as token_service
-# Modeļi
+# Models:
 from models import User, Role, UserRoles, RefreshToken
 # =========================================================================
 
 
 # =========================================================================
-#                               Biznesa loģika
+#                             Business logic
 # =========================================================================
 
 
@@ -33,15 +33,16 @@ async def google_auth_callback(
     request: Request
 ) -> TokenResponse:
 
-    # Iegūst tokenu no Google
+    # Get token from request and get user info
     token = await oauth.google.authorize_access_token(request)
-    user_info = token["userinfo"]
 
+    # User info from token
+    user_info = token["userinfo"]
     email = user_info["email"]
     google_id = user_info["sub"]
 
 
-    # Meklē lietotaju pēc google_id
+    # Search for user by google_id
     result = await db.exec(
         select(User).where(User.google_id == google_id)
     )
@@ -51,7 +52,7 @@ async def google_auth_callback(
         raise HTTPException(status_code=401, detail="User is inactive")
 
     
-    # Ja nav -> meklē pēc email
+    # Search for user by email
     if not user:
         result = await db.exec(
             select(User).where(User.email == email)
@@ -61,7 +62,7 @@ async def google_auth_callback(
         if user and not user.active:
             raise HTTPException(status_code=401, detail="User is inactive")
 
-    # Lietotāja izveide vai atjaunošana
+    # User exists, update user info
     if user:
         user.google_id = google_id
         user.auth_provider = "google"
@@ -79,7 +80,7 @@ async def google_auth_callback(
         await db.commit()
         await db.refresh(user)
 
-        # ===== Jaunā lietotāja 'user' lomas piešķiršana =====
+        # User roles
 
         result = await db.exec(
             select(Role).where(Role.name == "user")
@@ -96,11 +97,11 @@ async def google_auth_callback(
             )
             await db.commit()
 
-    # Ja lietotājs nav atjaunots, izlaiž
+    # User info update
     await db.commit()
     await db.refresh(user)
 
-    # Veco tokenu dzēšana
+    # Token rotation
     result = await db.exec(
         select(RefreshToken).where(RefreshToken.user_id == user.id)
     )
@@ -112,7 +113,7 @@ async def google_auth_callback(
     await db.commit()
 
 
-    # Toķenu ģenerācija
+    # Token generation
     refresh_token_value = await token_service.create_refresh_token()
 
     await token_service.save_refresh_token(
@@ -121,9 +122,9 @@ async def google_auth_callback(
         db=db
     )
 
-    # ===== Access tokena izveide =====
+    # Create access token
 
-    # Lietotāja lomu ieguve
+    # Get user roles
     result = await db.exec(
         select(Role.name)
         .join(UserRoles, UserRoles.role_id == Role.id)
@@ -132,6 +133,7 @@ async def google_auth_callback(
 
     roles = result.all()
 
+    # Create access token with roles
     access_token = await token_service.create_access_token(user_id=user.id, roles=roles)
 
     return TokenResponse(
@@ -140,18 +142,19 @@ async def google_auth_callback(
     )
 
 
-# ================= Lietotāja reģistrācijas metode ========================
+# ================= Registration ========================
 async def register_user(
     db: AsyncSession, 
     user_registration_data: RegistrationRequest
 ) -> TokenResponse:
-    # ===== Lietotāja eksistences pārbaude =====
+    
+    # Check user existence
 
-    # Normalizējam lietotāja datus
+    # Normalize username and email
     user_registration_data.username = user_registration_data.username.lower()
     user_registration_data.email = user_registration_data.email.lower()
 
-    # Pārbaude uz lietotāja eksistenci DB
+    # Check if user already exists
     result = await db.exec(
         select(User).where(User.username == user_registration_data.username)
     )
@@ -162,7 +165,7 @@ async def register_user(
         raise HTTPException(status_code=400, detail="User already exists")
     
 
-    # Pārbaude uz e-pastu DB
+    # Check if email already exists
     result = await db.exec( 
         select(User).where(User.email == user_registration_data.email)
     )
@@ -173,7 +176,7 @@ async def register_user(
         raise HTTPException(status_code=400, detail="Email already exists")
     
 
-    # ===== Jaunā lietotāja reģistrācija =====
+    # New user registration
     
     new_user = User(
         username=user_registration_data.username,
@@ -185,7 +188,7 @@ async def register_user(
     await db.commit()
     await db.refresh(new_user)
 
-    # ===== Jaunā lietotāja 'user' lomas piešķiršana =====
+    # Append user role (user) to database
 
     result = await db.exec(
         select(Role).where(Role.name == "user")
@@ -203,7 +206,7 @@ async def register_user(
         await db.commit()
 
     
-    # ===== Tokenu izveide =====
+    # Token generation
 
     access_token = await token_service.create_access_token(
         user_id=new_user.id, 
@@ -219,16 +222,16 @@ async def register_user(
     )
 
 
-# ========================= Lietotāja login ================================
+# ========================= Login ================================
 async def authenticate_user(
     db: AsyncSession,
     data: LoginRequest
 ) -> TokenResponse:
     
-    # Normalizē lietotājvārdu
+    # Normalize username
     username = data.username.lower()
 
-    # Meklē lietotāju
+    # Search for user
     result = await db.exec(
         select(User).where(User.username == username)
     )
@@ -238,29 +241,29 @@ async def authenticate_user(
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Paroles pārbaude
+    # Check password
     if not password_service.verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Pārbauda, vai lietotājs nav bloķēts
+    # Check user status
     if not user.active:
         raise HTTPException(status_code=403, detail="User is blocked")
     
-    # ===== Tokenu rotācija (refresh) =====
+    # Token rotation
 
-    # Dzēš veco refresh tokenu
+    # Remove old refresh token
     await token_service.delete_refresh_token_by_user_id(user_id=user.id, db=db)
 
-    # Jaunā tokena izveide
+    # Create new refresh token
     new_refresh_token = await token_service.create_refresh_token()
     await token_service.save_refresh_token(
         refresh_token=new_refresh_token, 
         user_id=user.id, db=db
     )
 
-    # ===== Access tokena izveide =====
+    # Create access token
 
-    # Lietotāja lomu ieguve
+    # Get user roles
     result = await db.exec(
         select(Role.name)
         .join(UserRoles, UserRoles.role_id == Role.id)
@@ -277,13 +280,13 @@ async def authenticate_user(
     )
 
 
-# ========================= Lietotāja logout =================================
+# ========================= Logout =================================
 async def logout_user(
     db: AsyncSession,
     refresh_token: str,
 ) -> dict:
     
-    # Dzēšam refresh tokenu no DB
+    # Remove refresh token
     await token_service.delete_refresh_token(
         refresh_token=refresh_token, 
         db=db

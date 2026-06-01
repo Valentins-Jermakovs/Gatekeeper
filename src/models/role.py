@@ -4,21 +4,21 @@
 from sqlmodel import Field, SQLModel
 # =====================================================
 
-# Roles (lomas) modelis
+# Role model
 class Role(SQLModel, table=True):
 
-    # Tabulas nosaukums
+    # Table name
     __tablename__ = "roles"
 
-    # Lomas identifikators
+    # Role id
     id: int = Field(default=None, primary_key=True)
 
-    # Lomas nosaukums
+    # Role name
     name: str = Field(
         max_length=50,
         unique=True,
         index=True
     )
 
-    # Lomas apraksts
+    # Role description
     description: str = Field(max_length=256)

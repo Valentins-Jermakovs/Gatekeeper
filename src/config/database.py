@@ -10,27 +10,27 @@ import os
 
 
 # =====================================================
-# Ielādē dotenv failu, lai varētu izmantot DATABASE_URL
+#       Load dotenv and get DATABASE_URL
 # =====================================================
-load_dotenv()                               # Ielādē dotenv failu
-DATABASE_URL = os.getenv("DATABASE_URL")    # Nolasa ceļu līdz DB
+load_dotenv()                               # Read from .env
+DATABASE_URL = os.getenv("DATABASE_URL")    # Save DATABASE_URL
 # =====================================================
 
 
 # =====================================================
-#                   Dziņa izveide
+#                   Engine creation
 # =====================================================
 engine = create_async_engine(
-    DATABASE_URL,       # Dziņa URL
-    echo=True,          # parāda SQL (dev vajadzībām)
+    DATABASE_URL,       # Engine URL
+    echo=True,          # Log SQL queries for debugging (change to False in production)
 )
 
 # =====================================================
-#           Asinhronas sesijas izveide
+#           AsyncSessionLocal creation
 # =====================================================
-# Izveido sesijas fabriku (Asinhroni)
+#   Create a session factory for async sessions
 AsyncSessionLocal = sessionmaker(
-    engine,                         # Dziņa objekts
-    class_=AsyncSession,            # Asinhrona sesija
-    expire_on_commit=False          # Sesija nebeidzas pēc saglabāšanas
+    engine,                         # Engine
+    class_=AsyncSession,            # Session class
+    expire_on_commit=False          # Expire sessions after commit
 )

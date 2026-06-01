@@ -5,23 +5,23 @@ from pydantic import BaseModel, Field, EmailStr
 # =====================================================
 
 # =====================================================
-#                       Shēmas
+#                       Schemas
 # =====================================================
 
-# Login formas validācijas shēma
+# Login schema for authentication
 class LoginRequest(BaseModel):
 
-    # Lietotājvārds
+    # Username
     username: str = Field(min_length=1, max_length=50)
-    # Parole
+    # Password
     password: str = Field(min_length=8, max_length=255)
 
-# Reģistrācijas formas validācijas shēma
+# Registration schema
 class RegistrationRequest(BaseModel):
 
-    # Lietotājvārds
+    # Username
     username: str = Field(min_length=1, max_length=50)
-    # E-pasts
+    # Email
     email: EmailStr = Field(max_length=255)
-    # Parole
+    # Password
     password: str = Field(min_length=8, max_length=255)

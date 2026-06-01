@@ -5,8 +5,9 @@ from .database import AsyncSessionLocal
 # =====================================================
 
 # =====================================================
-# Asinhronas sesijas izveide
+#           Dependency injection
 # =====================================================
 async def get_db():
-    async with AsyncSessionLocal() as session:           # Izveido sesiju
-        yield session                                    # Atgriež sesiju
+    async with AsyncSessionLocal() as session:           # Create session
+        yield session                                    # Return session to caller
+# =====================================================

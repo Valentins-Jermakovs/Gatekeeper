@@ -6,16 +6,16 @@ from pwdlib import PasswordHash
 
 
 # =====================================================
-#                   Biznesa loģika
+#                   Business logic
 # =====================================================
 
-# Inicializē paroļu šifrētāju
+# Initialize password hasher (argon2)
 password_hash = PasswordHash.recommended()
 
-# Metode paroles hešošanai
+# Function for password hashing
 async def hash_password(password: str) -> str:
     return password_hash.hash(password)
 
-# Metode paroļu verifikācijai
+# Function for password verification
 async def verify_password(password: str, hashed_password: str) -> bool:
     return password_hash.verify(password, hashed_password)

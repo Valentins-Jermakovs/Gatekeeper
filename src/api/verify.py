@@ -1,16 +1,16 @@
 # =========================================================================
 #                               imports
 # =========================================================================
-# Bibliotēkas:
+# Libraries:
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
 from sqlmodel.ext.asyncio.session import AsyncSession
 # Dependencies:
 from config.db_dependency import get_db
-# Servisi:
+# Services:
 import services.tokens.token_service as token
-# Schēmas:
+# Schemas:
 from schemas import TokenResponse, TokenCheckResponse
 # =========================================================================
 
@@ -19,7 +19,7 @@ from schemas import TokenResponse, TokenCheckResponse
 #                       Router + Security Schemas
 # =========================================================================
 
-# Router objekta izveide
+# Router object
 router = APIRouter(
     prefix="/token",
     tags=["Tokens check and refresh service"]
@@ -34,7 +34,7 @@ access_scheme = HTTPBearer()    # access token
 #                             Endpoints
 # =========================================================================
 
-# ================= Access tokena pārbaudes endpoint ======================
+# ================= Access tokena verification endpoint ======================
 @router.get("/verify", response_model=TokenCheckResponse)
 async def check_token_endpoint(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(access_scheme)],
@@ -50,7 +50,7 @@ async def check_token_endpoint(
     )
 
 
-# ================= Tokenu atjaunošana endpoint ===========================
+# ================= Tokens refresh endpoint ===========================
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token_endpoint(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(refresh_scheme)],

@@ -6,28 +6,28 @@ from typing import Optional
 from datetime import datetime
 # =====================================================
 
-# Lietotāja modelis
+# User model
 class User(SQLModel, table=True):
 
-    # Tabulas nosaukums
+    # Table name
     __tablename__ = "users"
 
-    # Lietotāja identifikators
+    # User id
     id: int | None = Field(default=None, primary_key=True)
     
-    username: Optional[str] = Field(        # Lietotājvārds
+    username: Optional[str] = Field(        # Username
         default=None, 
         max_length=50, 
         index=True, 
         unique=True
     )  
 
-    password_hash: Optional[str] = Field(   # Šifrēta parole
+    password_hash: Optional[str] = Field(   # User password
         default=None,
         max_length=255
     )  
 
-    email: str = Field(                     # E-pasts
+    email: str = Field(                     # Email
         max_length=100, 
         index=True, 
         unique=True
@@ -44,10 +44,10 @@ class User(SQLModel, table=True):
         max_length=20
     )  
 
-    created_at: datetime = Field(           # Reģistrācijas laiks
+    created_at: datetime = Field(           # Registration date
         default_factory=lambda: datetime.now()
     )  
 
-    active: bool = Field(                   # Lietotāja statuss
+    active: bool = Field(                   # User status
         default=True
     )  
