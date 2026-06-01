@@ -44,7 +44,7 @@ router = APIRouter(
 
 # ===================== Google endpoints ==================================
 
-# http://localhost:8000/auth/google/login
+# http://localhost:8000/auth/google/login - Google login
 
 oauth = OAuth()
 
