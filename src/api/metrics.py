@@ -7,7 +7,7 @@ router = APIRouter(
     tags=["Metrics services"],
 )
 
-@router.get("/metrics")
+@router.get("/stats")
 async def metrics():
     return {
         "cpu_percent": psutil.cpu_percent(),
