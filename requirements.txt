@@ -29,6 +29,7 @@ joserfc==1.6.8
 markdown-it-py==4.2.0
 MarkupSafe==3.0.3
 mdurl==0.1.2
+psutil==7.2.2
 psycopg2-binary==2.9.12
 pwdlib==0.3.0
 pyasn1==0.6.3
