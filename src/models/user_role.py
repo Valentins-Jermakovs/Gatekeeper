@@ -1,8 +1,11 @@
-# Importē bibliotēkas
+# =====================================================
+#                       imports
+# =====================================================
 from sqlmodel import Field, SQLModel
+# =====================================================
 
 # Lietotāju un lomu savienojuma modelis
-class UserRolesModel(SQLModel, table=True):
+class UserRoles(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "user_roles"

@@ -1,8 +1,11 @@
-# Importē bibliotēkas
+# =====================================================
+#                       imports
+# =====================================================
 from sqlmodel import Field, SQLModel
+# =====================================================
 
 # Roles (lomas) modelis
-class RoleModel(SQLModel, table=True):
+class Role(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "roles"

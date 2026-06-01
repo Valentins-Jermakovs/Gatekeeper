@@ -1,12 +1,23 @@
+# =========================================================================
+#                               imports
+# =========================================================================
+# Bibliotēkas:
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
-from services.tokens.access.verify_access_token import verify_access_token
 from sqlmodel.ext.asyncio.session import AsyncSession
+# Dependencies:
 from config.db_dependency import get_db
-from services.tokens.access.refresh_access_token import refresh_access_token
-from schemas.token import TokenSchema
-from schemas.token_check import TokenCheckSchema
+# Servisi:
+import services.tokens.token_service as token
+# Schēmas:
+from schemas import TokenResponse, TokenCheckResponse
+# =========================================================================
+
+
+# =========================================================================
+#                       Router + Security Schemas
+# =========================================================================
 
 # Router objekta izveide
 router = APIRouter(
@@ -19,27 +30,31 @@ refresh_scheme = HTTPBearer()   # refresh token
 access_scheme = HTTPBearer()    # access token
 
 
-# Access tokena pārbaudes endpoint
-@router.get("/verify", response_model=TokenCheckSchema)
+# =========================================================================
+#                             Endpoints
+# =========================================================================
+
+# ================= Access tokena pārbaudes endpoint ======================
+@router.get("/verify", response_model=TokenCheckResponse)
 async def check_token_endpoint(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(access_scheme)],
 ):
     access_token = credentials.credentials
     
-    payload = await verify_access_token(
+    payload = await token.verify_access_token(
         token=access_token,
     )
 
-    return TokenCheckSchema(
+    return TokenCheckResponse(
         access_token=access_token,
     )
 
 
-# Tokenu atjaunošana
-@router.post("/refresh", response_model=TokenSchema)
+# ================= Tokenu atjaunošana endpoint ===========================
+@router.post("/refresh", response_model=TokenResponse)
 async def refresh_token_endpoint(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(refresh_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     refresh_token = credentials.credentials
-    return await refresh_access_token(refresh_token, db)
+    return await token.refresh_access_token(refresh_token, db)

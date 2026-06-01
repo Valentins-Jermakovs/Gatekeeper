@@ -1,10 +1,13 @@
-# Importē nepieciešamas bibliotēkas
+# =====================================================
+#                       imports
+# =====================================================
 from sqlmodel import Field, SQLModel
 from typing import Optional
 from datetime import datetime
+# =====================================================
 
 # Lietotāja modelis
-class UserModel(SQLModel, table=True):
+class User(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "users"

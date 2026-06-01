@@ -1,9 +1,12 @@
-# Importē nepieciešamas bibliotēkas
+# =====================================================
+#                   imports
+# =====================================================
 from sqlmodel import Field, SQLModel
 from datetime import datetime, timedelta
+# =====================================================
 
 # Refresh tokena modelis
-class RefreshTokenModel(SQLModel, table=True):
+class RefreshToken(SQLModel, table=True):
 
     # Tabulas nosaukums
     __tablename__ = "refresh_tokens"
@@ -17,10 +20,15 @@ class RefreshTokenModel(SQLModel, table=True):
     # Refresh token
     refresh_token: str = Field(max_length=256, unique=True, index=True)
     
-    # Laika iestatījumi
+    # =================================================
+    #               Laika iestatījumi
+    # ================================================
+
+    # Reģistrācijas laiks
     created_at: datetime = Field(
         default_factory=lambda: datetime.now()
     )
+    # Tokena dzīves cikla beigu laiks
     expires_at: datetime = Field(
         default_factory=lambda: datetime.now() + timedelta(days=7)
     )

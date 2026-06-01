@@ -1,12 +1,22 @@
-# Importē bibliotēkas, modeļus, utilītas
+# =====================================================
+#                       imports
+# =====================================================
+# Bibliotēkas:
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
 from dotenv import load_dotenv
 import os
-from models import UserRolesModel, RefreshTokenModel, UserModel, RoleModel
+# Modeļi:
+from models import UserRoles, RefreshToken, User, Role
+# Utilītas:
 from utils.init_db_roles import init_roles
+# =====================================================
 
+
+# =====================================================
 # Ielādē dotenv failu, lai varētu izmantot DATABASE_URL
+# =====================================================
+
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -16,7 +26,10 @@ engine = create_async_engine(
     echo=True,
 )
 
-# DB inicializācija
+# =====================================================
+#                   DB inicializācija
+# =====================================================
+
 async def init_db():
 
     async with engine.begin() as conn:
