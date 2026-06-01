@@ -75,10 +75,14 @@ async def google_auth_handler(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    '''
-    Handle Google callback
-    '''
-    tokens = await auth.google_auth_callback(oauth, db, request)
+    
+    
+    token = await auth.google_auth_callback(
+        oauth=oauth,
+        db=db,
+        request=request
+    )
+    
 
     frontend_url = os.getenv(
         "FRONTEND_URL",
@@ -86,8 +90,8 @@ async def google_auth_handler(
     )
 
     query = urlencode({
-        "access_token": tokens.access_token,
-        "refresh_token": tokens.refresh_token,
+        "access_token": token.access_token,
+        "refresh_token": token.refresh_token,
     })
 
     return RedirectResponse(

@@ -54,6 +54,15 @@ SECRET_KEY=replace-this-with-a-secure-secret
 ALGORITHM=HS256
 ```
 
+For Google OAuth support, keep OAuth settings in `src/.env`:
+
+```env
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+FRONTEND_URL=http://localhost:5170/login
+```
+
 > Note: The `DATABASE_URL` host should be `db` when running with Docker Compose, because the service is named `db` in `compose.yaml`.
 
 ---
@@ -65,6 +74,8 @@ From the repository root:
 ```bash
 docker compose up --build
 ```
+
+The Compose setup now loads both `./.env` and `./src/.env`, so Google OAuth variables defined in `src/.env` are available to the app.
 
 Then visit:
 
