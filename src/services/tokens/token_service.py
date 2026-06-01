@@ -27,7 +27,7 @@ load_dotenv()
 # Save .env variables
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    raise ValueError("SECRET_KEY nav iestatīts .env failā")
+    raise ValueError("SECRET_KEY environment variable is required for token service")
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
