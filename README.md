@@ -34,7 +34,7 @@
 - `src/models/` — SQLModel ORM models
 - `src/schemas/` — request/response data models
 - `src/services/` — business logic for auth, tokens, registration, logout
-- `src/routers/` — API routes
+- `src/api/` — API routes and OAuth endpoints
 - `src/utils/` — DB initialization helpers
 - `compose.yaml` — Docker Compose configuration
 - `.env` — environment configuration
@@ -43,7 +43,9 @@
 
 ## Environment setup
 
-Create or update the root `.env` file with values like these:
+The app loads environment variables from both root `.env` and `src/.env`.
+
+### Recommended root `.env` for Docker Compose
 
 ```env
 POSTGRES_USER=app_user
@@ -54,7 +56,7 @@ SECRET_KEY=replace-this-with-a-secure-secret
 ALGORITHM=HS256
 ```
 
-For Google OAuth support, keep OAuth settings in `src/.env`:
+### Recommended `src/.env` for Google OAuth
 
 ```env
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -63,7 +65,9 @@ GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
 FRONTEND_URL=http://localhost:5170/login
 ```
 
-> Note: The `DATABASE_URL` host should be `db` when running with Docker Compose, because the service is named `db` in `compose.yaml`.
+> Note: When the app runs in Docker Compose, the database host must be `db` because the service is named `db` in `compose.yaml`.
+
+> Note: `GOOGLE_REDIRECT_URI` must exactly match the redirect URI configured in the Google Cloud OAuth client.
 
 ---
 
@@ -75,13 +79,23 @@ From the repository root:
 docker compose up --build
 ```
 
-The Compose setup now loads both `./.env` and `./src/.env`, so Google OAuth variables defined in `src/.env` are available to the app.
+The service will be available at:
 
-Then visit:
+```bash
+http://localhost:8000
+```
+
+Open the FastAPI docs at:
 
 ```bash
 http://localhost:8000/docs
 ```
+
+### Docker Compose environment behavior
+
+- `./.env` provides core configuration values such as `DATABASE_URL` and `SECRET_KEY`.
+- `src/.env` provides Google OAuth settings used by the app.
+- The app uses `db` as the PostgreSQL hostname inside Docker.
 
 ### Handy Docker commands
 
@@ -120,10 +134,13 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 | Route | Method | Description |
 | --- | --- | --- |
-| `/auth/register` | POST | Register a new user |
-| `/auth/login` | POST | Authenticate and receive tokens |
-| `/auth/logout` | POST | Invalidate current refresh token |
-| `/auth/refresh` | POST | Refresh access token |
+| `/auth/register` | POST | Register a new user and receive access/refresh tokens |
+| `/auth/login` | POST | Authenticate a user with username/password |
+| `/auth/logout` | POST | Invalidate the current refresh token |
+| `/auth/google/login` | GET | Redirect to Google OAuth login |
+| `/auth/google/callback` | GET | Google OAuth callback endpoint |
+| `/token/refresh` | POST | Exchange a refresh token for a new access token |
+| `/token/verify` | GET | Verify an access token is valid |
 
 Typically the app uses `schemas` under `src/schemas/` for request/response validation.
 
