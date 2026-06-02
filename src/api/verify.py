@@ -11,7 +11,7 @@ from config.db_dependency import get_db
 # Services:
 import services.tokens.token_service as token
 # Schemas:
-from schemas import TokenResponse, TokenCheckResponse
+from schemas import TokenResponse, TokenCheckResponse, RefreshRequest
 # =========================================================================
 
 
@@ -25,8 +25,7 @@ router = APIRouter(
     tags=["Tokens check and refresh service"]
 )
 
-# Drošības shēmas
-refresh_scheme = HTTPBearer()   # refresh token
+# Security Schemas
 access_scheme = HTTPBearer()    # access token
 
 
@@ -53,8 +52,11 @@ async def check_token_endpoint(
 # ================= Tokens refresh endpoint ===========================
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token_endpoint(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(refresh_scheme)],
+    data: RefreshRequest,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    refresh_token = credentials.credentials
-    return await token.refresh_access_token(refresh_token, db)
+
+    return await token.refresh_access_token(
+        refresh_token=data.refresh_token,
+        db=db
+    )

@@ -22,7 +22,8 @@ import services.auth.auth_service as auth
 from schemas import (
     LoginRequest, 
     RegistrationRequest, 
-    TokenResponse
+    TokenResponse,
+    LogoutRequest
 )
 # =========================================================================
 
@@ -130,19 +131,16 @@ async def user_registration_endpoint(
 
 
 # ======================== Logout endpoint ================================
-logout_scheme = HTTPBearer()
-
 @router.post(
     "/logout",
     summary="Logout a user"
 )
 async def logout_user_endpoint(
-    data: Annotated[
-        HTTPAuthorizationCredentials,
-        Depends(logout_scheme)
-    ],
+    data: LogoutRequest,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
 
-    refresh_token = data.credentials
-    return await auth.logout_user(db=db, refresh_token=refresh_token)
+    return await auth.logout_user(
+        db=db, 
+        refresh_token=data.refresh_token
+    )
