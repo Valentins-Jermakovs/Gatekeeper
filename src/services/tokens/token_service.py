@@ -4,12 +4,14 @@
 # Libraries:
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from jose import jwt, JWTError, ExpiredSignatureError
+from jose import jwt
 from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 import secrets
 import os
+import hmac
+import hashlib
 # Schemas:
 from schemas import TokenResponse
 # Models:
@@ -81,9 +83,12 @@ async def refresh_access_token(
 ) -> TokenResponse:
 
     # Get existing refresh token
+
+    hashed_token = await hash_refresh_token(refresh_token)
+
     result = await db.exec(
         select(RefreshToken).where(
-            RefreshToken.refresh_token == refresh_token
+            RefreshToken.refresh_token == hashed_token
         )
     )
 
@@ -150,6 +155,16 @@ async def refresh_access_token(
 #                   Refresh tokens
 # =======================================================
 
+REFRESH_TOKEN_HASH_ALGORITHM = hashlib.sha256
+
+# Function for hashing refresh token
+async def hash_refresh_token(token: str) -> str:
+    return hmac.new(
+        SECRET_KEY.encode(),
+        token.encode(),
+        REFRESH_TOKEN_HASH_ALGORITHM
+    ).hexdigest()
+
 # Function for creating refresh token
 async def create_refresh_token() -> str:
     return secrets.token_urlsafe(32)
@@ -165,7 +180,7 @@ async def save_refresh_token(
     # Token object
     token = RefreshToken(
         user_id=user_id,
-        refresh_token=refresh_token,
+        refresh_token= await hash_refresh_token(refresh_token),
     )
 
     # Save token
@@ -183,9 +198,11 @@ async def delete_refresh_token(
     db: AsyncSession
 ) -> None:
 
+    hashed_token = await hash_refresh_token(refresh_token)
+
     result = await db.exec(
         select(RefreshToken).where(
-            RefreshToken.refresh_token == refresh_token
+            RefreshToken.refresh_token == hashed_token
         )
     )
 

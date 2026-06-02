@@ -54,6 +54,7 @@ async def get_user_info(
     
     # Create user response
     user = UserResponse(
+        id=user.id,
         username=user.username,
         email=user.email,
         roles=user_roles,
