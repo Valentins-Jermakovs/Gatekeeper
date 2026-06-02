@@ -17,6 +17,8 @@ from .user import (
     SetPasswordRequest,
     ChangeUsersRolesRequest,
     ChangeUsersRolesResponse,
-    RemoveUsersRolesResponse
+    RemoveUsersRolesResponse,
+    ChangeUserStatusRequest,
+    ChangeUserStatusResponse
 )
 from .logout import LogoutRequest

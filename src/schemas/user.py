@@ -55,3 +55,14 @@ class RemoveUsersRolesResponse(SQLModel):
     removed_from: list[int]
     skipped_not_existing: list[int]
     missing_users: list[int]
+
+# Schema for change users status
+class ChangeUserStatusRequest(SQLModel):
+    users: list[int]
+    active: bool
+
+# Schema for response
+class ChangeUserStatusResponse(SQLModel):
+    changed: list[int]
+    skipped_not_existing: list[int]
+    missing_users: list[int]

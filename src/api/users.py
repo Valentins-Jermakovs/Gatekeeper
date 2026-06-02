@@ -16,7 +16,9 @@ from schemas import (
     SetPasswordRequest,
     ChangeUsersRolesRequest,
     ChangeUsersRolesResponse,
-    RemoveUsersRolesResponse
+    RemoveUsersRolesResponse,
+    ChangeUserStatusRequest,
+    ChangeUserStatusResponse
 )
 # Services
 import services.users.user_service as user_service
@@ -177,6 +179,26 @@ async def remove_users_roles_endpoint(
     user_roles = current_user.get("roles")
 
     return await user_service.remove_users_roles(
+        data=data,
+        current_user_roles=user_roles,
+        current_user_id=user_id,
+        db=db
+    )
+
+
+# Change users status endpoint
+@router.patch("/change-status", response_model=ChangeUserStatusResponse)
+async def change_user_status_endpoint(
+    data: ChangeUserStatusRequest,
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ChangeUserStatusResponse:
+    
+    user_id = current_user.get("sub")
+    user_id = int(user_id)
+    user_roles = current_user.get("roles")
+
+    return await user_service.change_user_status(
         data=data,
         current_user_roles=user_roles,
         current_user_id=user_id,

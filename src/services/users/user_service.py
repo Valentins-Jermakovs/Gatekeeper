@@ -14,7 +14,9 @@ from schemas import (
     SetPasswordRequest,
     ChangeUsersRolesRequest,
     ChangeUsersRolesResponse,
-    RemoveUsersRolesResponse
+    RemoveUsersRolesResponse,
+    ChangeUserStatusRequest,
+    ChangeUserStatusResponse
 )
 # Models:
 from models import User, Role, UserRoles
@@ -385,5 +387,48 @@ async def remove_users_roles(
     return RemoveUsersRolesResponse(
         removed_from=removed_from,
         skipped_not_existing=skipped_not_existing,
+        missing_users=list(missing_users)
+    )
+
+
+# Change user status
+async def change_user_status(
+    data: ChangeUserStatusRequest,
+    current_user_roles: list[str],
+    current_user_id: int,
+    db: AsyncSession
+) -> ChangeUserStatusResponse:
+
+    if "admin" not in current_user_roles:
+        raise HTTPException(403, "Forbidden")
+
+    # Check if admin is trying to modify own roles
+    if current_user_id in data.users:
+        raise HTTPException(
+        status_code=400,
+        detail="Admin cannot modify own roles"
+    )
+
+    target_ids = set(data.users)
+
+    users = (await db.exec(
+        select(User).where(User.id.in_(target_ids))
+    )).all()
+
+    if not users:
+        raise HTTPException(404, "No users found")
+
+    found_user_ids = {u.id for u in users}
+    missing_users = target_ids - found_user_ids
+
+    for user in users:
+        if user.active != data.active:
+            user.active = data.active
+
+    await db.commit()
+
+    return ChangeUserStatusResponse(
+        changed=list(found_user_ids),
+        skipped_not_existing=list(missing_users),
         missing_users=list(missing_users)
     )
