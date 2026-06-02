@@ -22,8 +22,6 @@ from schemas import (
 from models import User, Role, UserRoles
 # Services:
 import services.password.password_service as password_service
-from dotenv import load_dotenv
-import os
 # Schemas:
 from schemas import UserListResponse
 # =====================================================

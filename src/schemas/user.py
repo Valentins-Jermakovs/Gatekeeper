@@ -11,6 +11,7 @@ from typing import Optional
 
 # UserResponse Schema
 class UserResponse(SQLModel):
+    id: int
     username: str | None
     email: str
     roles: list[str]
