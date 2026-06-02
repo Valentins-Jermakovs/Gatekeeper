@@ -4,6 +4,7 @@
 # Libraries:
 from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import func, select
 # Dependencies:
 from config.security import get_current_user
 from config.db_dependency import get_db
@@ -18,10 +19,14 @@ from schemas import (
     ChangeUsersRolesResponse,
     RemoveUsersRolesResponse,
     ChangeUserStatusRequest,
-    ChangeUserStatusResponse
+    ChangeUserStatusResponse,
+    UsersQueryParams,
+    UserListResponse
 )
 # Services
 import services.users.user_service as user_service
+# Models:
+from models import User
 # =========================================================================
 
 
@@ -203,4 +208,24 @@ async def change_user_status_endpoint(
         current_user_roles=user_roles,
         current_user_id=user_id,
         db=db
+    )
+
+
+# List users endpoint
+@router.get("/users", response_model=UserListResponse)
+async def list_users(
+    limit: int = 20,
+    offset: int = 0,
+    current_user = Depends(get_current_user),
+    search: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    user_roles = current_user.get("roles")
+
+    return await user_service.get_users(
+        db=db,
+        limit=limit,
+        offset=offset,
+        search=search,
+        current_user_roles=user_roles
     )

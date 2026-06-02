@@ -19,6 +19,8 @@ from .user import (
     ChangeUsersRolesResponse,
     RemoveUsersRolesResponse,
     ChangeUserStatusRequest,
-    ChangeUserStatusResponse
+    ChangeUserStatusResponse,
+    UsersQueryParams,
+    UserListResponse
 )
 from .logout import LogoutRequest

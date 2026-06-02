@@ -3,7 +3,7 @@
 # =====================================================
 # Libraries:
 from fastapi import HTTPException
-from sqlmodel import select, delete
+from sqlmodel import select, delete, or_, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 # Schemas:
 from schemas import (
@@ -24,6 +24,8 @@ from models import User, Role, UserRoles
 import services.password.password_service as password_service
 from dotenv import load_dotenv
 import os
+# Schemas:
+from schemas import UserListResponse
 # =====================================================
 
 
@@ -431,4 +433,82 @@ async def change_user_status(
         changed=list(found_user_ids),
         skipped_not_existing=list(missing_users),
         missing_users=list(missing_users)
+    )
+
+
+# Get users
+async def get_users(
+    db: AsyncSession, 
+    limit: int, 
+    offset: int, 
+    current_user_roles: list[str],
+    search: str | None
+) -> UserListResponse:
+    
+    if "admin" not in current_user_roles:
+        raise HTTPException(403, "Forbidden")
+
+    query = select(User).distinct()
+    count_query = select(func.count(func.distinct(User.id)))
+
+    if search:
+        query = query.join(
+            UserRoles, User.id == UserRoles.user_id, isouter=True
+        ).join(
+            Role, Role.id == UserRoles.role_id, isouter=True
+        ).where(
+            or_(
+                User.username.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+                Role.name.ilike(f"%{search}%")
+            )
+        )
+        count_query = count_query.select_from(User).join(
+            UserRoles, User.id == UserRoles.user_id, isouter=True
+        ).join(
+            Role, Role.id == UserRoles.role_id, isouter=True
+        ).where(
+            or_(
+                User.username.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+                Role.name.ilike(f"%{search}%")
+            )
+        )
+    else:
+        count_query = count_query.select_from(User)
+
+    query = query.limit(limit).offset(offset)
+
+    result = await db.exec(query)
+    users = result.all()
+
+    total_result = await db.exec(count_query)
+    total = total_result.one()
+
+    user_responses = []
+
+    for user in users:
+        roles = (await db.exec(
+            select(Role.name)
+            .join(UserRoles)
+            .where(UserRoles.user_id == user.id)
+        )).all()
+
+        user_responses.append(
+            UserResponse(
+                id=user.id,
+                email=user.email,
+                username=user.username,
+                roles=roles,
+                active=user.active,
+                created_at=user.created_at
+            )
+        )
+
+    return UserListResponse(
+        users=user_responses,
+        total=total,
+        limit=limit,
+        offset=offset,
+        has_more=(offset + limit < total)
     )

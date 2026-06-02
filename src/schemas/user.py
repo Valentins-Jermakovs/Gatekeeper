@@ -5,6 +5,7 @@ from sqlmodel import SQLModel, Field
 from datetime import datetime
 from pydantic import EmailStr
 from enum import Enum
+from typing import Optional
 # =====================================================
 
 
@@ -66,3 +67,17 @@ class ChangeUserStatusResponse(SQLModel):
     changed: list[int]
     skipped_not_existing: list[int]
     missing_users: list[int]
+
+# Schema for user query params
+class UsersQueryParams(SQLModel):
+    limit: int = 20
+    offset: int = 0
+    search: Optional[str] = None
+
+# Schema for user list
+class UserListResponse(SQLModel):
+    users: list[UserResponse]
+    total: int
+    limit: int
+    offset: int
+    has_more: bool
