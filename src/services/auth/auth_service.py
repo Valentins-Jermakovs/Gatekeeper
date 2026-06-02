@@ -102,15 +102,9 @@ async def google_auth_callback(
     await db.refresh(user)
 
     # Token rotation
-    result = await db.exec(
-        select(RefreshToken).where(RefreshToken.user_id == user.id)
-    )
-    old_tokens = result.all()
 
-    for t in old_tokens:
-        await db.delete(t)
-
-    await db.commit()
+    # Remove old refresh token
+    await token_service.delete_refresh_token_by_user_id(user_id=user.id, db=db)
 
 
     # Token generation

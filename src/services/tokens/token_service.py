@@ -146,27 +146,6 @@ async def refresh_access_token(
     )
 
 
-# Function for checking access token
-async def verify_access_token(token: str) -> dict:
-    try:
-        # Decode token
-        payload = jwt.decode(
-            token, 
-            SECRET_KEY, 
-            algorithms=[ALGORITHM]
-        )
-
-        return payload
-    
-    # Error handling
-    # If token has expired
-    except ExpiredSignatureError as e:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    
-    # If token is invalid
-    except JWTError as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
 # =======================================================
 #                   Refresh tokens
 # =======================================================

@@ -1,7 +1,8 @@
 # =====================================================
 #                       imports
 # =====================================================
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
+from fastapi import HTTPException
 import os
 from dotenv import load_dotenv
 
@@ -35,8 +36,16 @@ def decode_access_token(token: str) -> dict:
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
-
         return payload
 
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token expired"
+        )
+
     except JWTError:
-        return None
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
