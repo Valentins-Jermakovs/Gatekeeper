@@ -1,35 +1,42 @@
 # Gatekeeper
 
-> **Gatekeeper** is a lightweight auth service built with FastAPI, SQLModel and PostgreSQL. It provides registration, login, logout, token refresh, and async architecture.
+> **Gatekeeper** is a lightweight auth service built with FastAPI, SQLModel and PostgreSQL. It provides registration, login, logout, refresh-token support, Google OAuth, role-based user management, and async execution.
 
 ---
 
 ## Features
 
-- Async FastAPI app with JWT-based authentication
-- PostgreSQL database support via `asyncpg`
-- Registration, login, logout, refresh token endpoints
-- Role assignment for new users
-- Docker-ready deployment with `docker compose`
-- `.env`-based configuration for easy environment switching
+- Async FastAPI application with JWT authentication
+- PostgreSQL support via `asyncpg` and `SQLModel`
+- Register, login, logout, refresh token endpoints
+- Google OAuth login and callback flow
+- Role-aware user search and admin user management
+- Docker Compose deployment ready
+- Environment configuration via `.env`
 
 ---
 
 ## Tech stack
 
-- `Python 3.12` • `FastAPI` • `SQLModel` • `SQLAlchemy AsyncIO` • `PostgreSQL` • `Uvicorn` • `Docker` • `Docker Compose`
+- `Python 3.12`
+- `FastAPI`
+- `SQLModel`
+- `asyncpg`
+- `PostgreSQL`
+- `Uvicorn`
+- `Docker` / `Docker Compose`
 
 ---
 
 ## Project structure
 
 - `src/` — application source code
-- `src/config/` — database and dependency config
+- `src/config/` — database and dependency configuration
 - `src/models/` — SQLModel ORM models
 - `src/schemas/` — request/response data models
-- `src/services/` — business logic for auth, tokens, registration, logout
-- `src/api/` — API routes and OAuth endpoints
-- `src/utils/` — DB initialization helpers
+- `src/services/` — business logic for auth, tokens, users, and passwords
+- `src/api/` — API route definitions
+- `src/utils/` — database initialization helpers
 - `compose.yaml` — Docker Compose configuration
 - `.env` — environment configuration
 
@@ -37,9 +44,9 @@
 
 ## Environment setup
 
-The app loads environment variables from both root `.env` and `src/.env`.
+The app loads environment variables from a `.env` file at startup.
 
-### Recommended root `.env` for Docker Compose
+### Required root `.env`
 
 ```env
 POSTGRES_USER=app_user
@@ -50,22 +57,22 @@ SECRET_KEY=replace-this-with-a-secure-secret
 ALGORITHM=HS256
 ```
 
-### Recommended `src/.env` for Google OAuth
+### Optional Google OAuth values
 
 ```env
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
-FRONTEND_URL=http://localhost:5170/login
+FRONTEND_URL=http://localhost:5173/login
 ```
 
-> Note: When the app runs in Docker Compose, the database host must be `db` because the service is named `db` in `compose.yaml`.
+> `GOOGLE_REDIRECT_URI` must exactly match the value configured in Google Cloud.
 
-> Note: `GOOGLE_REDIRECT_URI` must exactly match the redirect URI configured in the Google Cloud OAuth client.
+> When using Docker Compose, the database hostname should be `db` because the service is named `db` in `compose.yaml`.
 
 ---
 
-## Docker Launch
+## Docker launch
 
 From the repository root:
 
@@ -85,13 +92,7 @@ Open the FastAPI docs at:
 http://localhost:8000/docs
 ```
 
-### Docker Compose environment behavior
-
-- `./.env` provides core configuration values such as `DATABASE_URL` and `SECRET_KEY`.
-- `src/.env` provides Google OAuth settings used by the app.
-- The app uses `db` as the PostgreSQL hostname inside Docker.
-
-### Handy Docker commands
+### Useful Docker commands
 
 ```bash
 docker compose down
@@ -105,7 +106,7 @@ docker compose logs -f
 
 ## Local development
 
-If you prefer not to use Docker, install Python dependencies in a virtual environment:
+Install dependencies in a virtual environment:
 
 ```bash
 python3.12 -m venv gatevenv
@@ -113,14 +114,12 @@ source gatevenv/bin/activate
 pip install -r requirements.txt
 ```
 
-Then run the app:
+Run the app locally:
 
 ```bash
 cd src
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-
-> Ensure `.env` is present in the project root or `src/` if the app loads it from there.
 
 ---
 
@@ -128,42 +127,56 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 | Route | Method | Description |
 | --- | --- | --- |
-| `/auth/register` | POST | Register a new user and receive access/refresh tokens |
+| `/auth/register` | POST | Register a new user and return access and refresh tokens |
 | `/auth/login` | POST | Authenticate a user with username/password |
-| `/auth/logout` | POST | Invalidate the current refresh token |
+| `/auth/logout` | POST | Invalidate a refresh token and logout the user |
 | `/auth/google/login` | GET | Redirect to Google OAuth login |
-| `/auth/google/callback` | GET | Google OAuth callback endpoint |
-| `/token/refresh` | POST | Exchange a refresh token for a new access token |
-| `/token/verify` | GET | Verify an access token is valid |
+| `/auth/google/callback` | GET | Handle Google OAuth callback and redirect to frontend |
+| `/token/refresh` | POST | Refresh an access token using a refresh token |
+| `/metrics/stats` | GET | Return CPU and memory usage statistics |
+| `/users/me` | GET | Return the currently authenticated user |
+| `/users/me/email` | PATCH | Change the current user's email |
+| `/users/me/username` | PATCH | Change the current user's username |
+| `/users/me/password` | PATCH | Change the current user's password |
+| `/users/me/set-password` | POST | Set a new password for the current user |
+| `/users/add-roles` | PATCH | Add roles to one or more users (admin only) |
+| `/users/remove-roles` | DELETE | Remove roles from one or more users (admin only) |
+| `/users/change-status` | PATCH | Enable or disable users in batch (admin only) |
+| `/users/users` | GET | List users with pagination and search by username, email, or role |
 
-Typically the app uses `schemas` under `src/schemas/` for request/response validation.
+### Example user search
+
+```http
+GET /users/users?limit=20&offset=0&search=admin
+```
 
 ---
 
 ## Implementation notes
 
-- The project uses async database sessions and `db.exec(...)` everywhere for SQLModel compatibility.
-- `src/config/database.py` is configured to use `AsyncSession` from `sqlmodel.ext.asyncio.session`.
-- The `main.py` lifecycle calls `utils.init_db()` to prepare the DB at app startup.
+- `src/main.py` loads `.env` values and adds session middleware using `SECRET_KEY`.
+- `src/utils/init_db.py` initializes the database schema at application startup.
+- `src/services/users/user_service.py` supports searching users by username, email, or role name.
+- The app uses async SQLModel sessions with `db.exec(...)`.
 
 ---
 
 ## Tips
 
-- Change `SECRET_KEY` to a strong value before deploying
-- Use `docker compose logs -f` to inspect startup issues
-- Open `http://localhost:8000/docs` for interactive API docs
+- Use a strong `SECRET_KEY` before deploying.
+- Check `http://localhost:8000/docs` for interactive API docs.
+- Use `docker compose logs -f` to inspect startup issues.
 
 ---
 
 ## Fun touch
 
-```
+```text
   ___       _        _                    
  / _ \ __ _| |_ __ _| |__   __ _ ___  ___ 
 | | | / _` | __/ _` | '_ \ / _` / __|/ _ \
 | |_| | (_| | || (_| | |_) | (_| \__ \  __/
- \___/ \__,_|\__\__,_|_.__/ \__,_|___/\___|
+ \___/ \__,_|\__\__,_|_.__/ \__,_|___/\___/
 ```
 
 Thanks for using Gatekeeper!
