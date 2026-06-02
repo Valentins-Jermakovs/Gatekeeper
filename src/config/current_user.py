@@ -9,7 +9,7 @@ import utils.token_utils as token_utils
 # =========================================================================
 
 # Security
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 # Dependencies
 async def get_current_user(

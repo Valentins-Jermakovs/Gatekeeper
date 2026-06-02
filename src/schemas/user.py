@@ -10,5 +10,6 @@ from datetime import datetime
 class UserResponse(SQLModel):
     username: str | None
     email: str
+    roles: list[str]
     created_at: datetime
     active: bool
