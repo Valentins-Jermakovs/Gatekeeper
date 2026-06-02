@@ -14,6 +14,9 @@ from .user import (
     UserEmailRequest, 
     UserPasswordChangeRequest, 
     UserUsernameChangeRequest,
-    SetPasswordRequest
+    SetPasswordRequest,
+    ChangeUsersRolesRequest,
+    ChangeUsersRolesResponse,
+    RemoveUsersRolesResponse
 )
 from .logout import LogoutRequest

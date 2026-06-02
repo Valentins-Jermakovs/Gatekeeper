@@ -4,6 +4,7 @@
 from sqlmodel import SQLModel, Field
 from datetime import datetime
 from pydantic import EmailStr
+from enum import Enum
 # =====================================================
 
 
@@ -31,3 +32,26 @@ class SetPasswordRequest(SQLModel):
 # User username change request schema
 class UserUsernameChangeRequest(SQLModel):
     new_username: str = Field(min_length=1, max_length=50)
+
+
+# Roles enum
+class Roles(str, Enum):
+    admin = "admin"
+    manager = "manager"
+
+# Schema for users and it's roles modifications
+class ChangeUsersRolesRequest(SQLModel):
+    users: list[int]
+    role: Roles
+
+# Schema for users and it's roles modifications - Response
+class ChangeUsersRolesResponse(SQLModel):
+    added_to: list[int]
+    skipped_existing: int
+    missing_users: list[int]
+
+# Schema for users and it's roles removal
+class RemoveUsersRolesResponse(SQLModel):
+    removed_from: list[int]
+    skipped_not_existing: list[int]
+    missing_users: list[int]

@@ -13,7 +13,10 @@ from schemas import (
     UserEmailRequest, 
     UserUsernameChangeRequest,
     UserPasswordChangeRequest,
-    SetPasswordRequest
+    SetPasswordRequest,
+    ChangeUsersRolesRequest,
+    ChangeUsersRolesResponse,
+    RemoveUsersRolesResponse
 )
 # Services
 import services.users.user_service as user_service
@@ -135,3 +138,47 @@ async def set_user_password_endpoint(
     )
 
 # =========================================================================
+
+
+# =========================================================================
+#                       User admin modification endpoints
+# =========================================================================
+
+# Endpoint for adding users roles
+@router.patch("/add-roles", response_model=ChangeUsersRolesResponse)
+async def add_users_roles_endpoint(
+    data: ChangeUsersRolesRequest,
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ChangeUsersRolesResponse:
+    
+    user_id = current_user.get("sub")
+    user_id = int(user_id)
+    user_roles = current_user.get("roles")
+
+    return await user_service.add_users_roles(
+        data=data,
+        current_user_roles=user_roles,
+        current_user_id=user_id,
+        db=db
+    )
+
+
+# Endpoint for deleting users roles
+@router.delete("/remove-roles", response_model=RemoveUsersRolesResponse)
+async def remove_users_roles_endpoint(
+    data: ChangeUsersRolesRequest,
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> RemoveUsersRolesResponse:
+    
+    user_id = current_user.get("sub")
+    user_id = int(user_id)
+    user_roles = current_user.get("roles")
+
+    return await user_service.remove_users_roles(
+        data=data,
+        current_user_roles=user_roles,
+        current_user_id=user_id,
+        db=db
+    )

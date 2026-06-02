@@ -3,7 +3,7 @@
 # =====================================================
 # Libraries:
 from fastapi import HTTPException
-from sqlmodel import select
+from sqlmodel import select, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 # Schemas:
 from schemas import (
@@ -11,10 +11,13 @@ from schemas import (
     UserEmailRequest, 
     UserPasswordChangeRequest, 
     UserUsernameChangeRequest,
-    SetPasswordRequest
+    SetPasswordRequest,
+    ChangeUsersRolesRequest,
+    ChangeUsersRolesResponse,
+    RemoveUsersRolesResponse
 )
 # Models:
-from models import User
+from models import User, Role, UserRoles
 # Services:
 import services.password.password_service as password_service
 from dotenv import load_dotenv
@@ -235,4 +238,152 @@ async def set_user_password(
         user_id=user_id,
         user_roles=user_roles,
         db=db
+    )
+
+
+# ========== Users administration endpoints ==========
+
+# Function for changing users roles
+async def add_users_roles(
+    data: ChangeUsersRolesRequest,
+    current_user_roles: list[str],
+    current_user_id: int,
+    db: AsyncSession
+) -> ChangeUsersRolesResponse:
+
+    # Check if user has admin role
+    if "admin" not in current_user_roles:
+        raise HTTPException(403, "Forbidden")
+    
+    # Check if admin is trying to modify own roles
+    if current_user_id in data.users:
+        raise HTTPException(
+        status_code=400,
+        detail="Admin cannot modify own roles"
+    )
+
+    # Get role
+    role = (await db.exec(
+        select(Role).where(Role.name == data.role)
+    )).first()
+
+    if not role:
+        raise HTTPException(404, "Role not found")
+
+    # Get all users at once
+    users = (await db.exec(
+        select(User).where(User.id.in_(data.users))
+    )).all()
+
+    # Check if all users exist
+    found_user_ids = {u.id for u in users}
+    missing_users = set(data.users) - found_user_ids
+
+    # get existing relations in one query
+    existing_roles = await db.exec(
+        select(UserRoles).where(
+            UserRoles.user_id.in_(found_user_ids),
+            UserRoles.role_id == role.id
+        )
+    )
+
+    # Create set of existing relations
+    existing_set = {
+        (r.user_id, r.role_id)
+        for r in existing_roles.all()
+    }
+
+    # Add new relations
+    for user in users:
+        if (user.id, role.id) in existing_set:
+            continue
+
+        db.add(UserRoles(
+            user_id=user.id,
+            role_id=role.id
+        ))
+
+    await db.commit()
+
+    return ChangeUsersRolesResponse(
+        added_to=list(found_user_ids),
+        skipped_existing=len(existing_set),
+        missing_users=list(missing_users)
+    )
+        
+
+async def remove_users_roles(
+    data: ChangeUsersRolesRequest,
+    current_user_roles: list[str],
+    current_user_id: int,
+    db: AsyncSession
+) -> RemoveUsersRolesResponse:
+
+    # Check if user has admin role
+    if "admin" not in current_user_roles:
+        raise HTTPException(403, "Forbidden")
+    
+    # Check if admin is trying to modify own roles
+    if current_user_id in data.users:
+        raise HTTPException(
+        status_code=400,
+        detail="Admin cannot modify own roles"
+    )
+
+    # Get role
+    role = (await db.exec(
+        select(Role).where(Role.name == data.role)
+    )).first()
+
+    if not role:
+        raise HTTPException(404, "Role not found")
+
+    # Get all users at once
+    users = (await db.exec(
+        select(User).where(User.id.in_(data.users))
+    )).all()
+
+    # Check if all users exist
+    found_user_ids = {u.id for u in users}
+    missing_users = set(data.users) - found_user_ids
+
+    # get existing relations
+    existing_roles = await db.exec(
+        select(UserRoles).where(
+            UserRoles.user_id.in_(found_user_ids),
+            UserRoles.role_id == role.id
+        )
+    )
+
+    # Create set of existing relations
+    existing_map = {
+        r.user_id for r in existing_roles.all()
+    }
+
+
+    removed_from = []
+    skipped_not_existing = []
+
+    # Remove relations
+    for user_id in found_user_ids:
+
+        if user_id not in existing_map:
+            skipped_not_existing.append(user_id)
+            continue
+
+        await db.exec(
+            delete(UserRoles).where(
+                UserRoles.user_id == user_id,
+                UserRoles.role_id == role.id
+            )
+        )
+
+        removed_from.append(user_id)
+
+    await db.commit()
+
+    return RemoveUsersRolesResponse(
+        removed_from=removed_from,
+        skipped_not_existing=skipped_not_existing,
+        missing_users=list(missing_users)
     )
