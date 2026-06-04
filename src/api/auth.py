@@ -85,7 +85,7 @@ async def google_auth_handler(
     
     frontend_url = os.getenv(
         "FRONTEND_URL",
-        "http://localhost:5173/login"
+        "http://localhost:5173/system"
     )
 
     query = urlencode({

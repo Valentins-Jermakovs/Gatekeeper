@@ -8,6 +8,7 @@ import os
 from utils.init_db import init_db
 from api import main_router
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 # ==========================================
 
 
@@ -21,6 +22,17 @@ async def lifespan(app: FastAPI):
 
 # FastAPI object
 app = FastAPI(lifespan=lifespan)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # Vite / SvelteKit dev
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Session middleware
 load_dotenv()
