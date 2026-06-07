@@ -20,6 +20,7 @@ async def init_roles(engine):
             "user": "User can register, login and manage only own data",
             "admin": "Administrator have full system access",
             "manager": "Manager create system content",
+            "librarian": "Librarian can manage books"
         }
 
         # Check if roles are already initialized
