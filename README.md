@@ -18,13 +18,14 @@
 
 ## Tech stack
 
-- `Python 3.12`
-- `FastAPI`
-- `SQLModel`
-- `asyncpg`
-- `PostgreSQL`
-- `Uvicorn`
-- `Docker` / `Docker Compose`
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![SQLModel](https://img.shields.io/badge/SQLModel-000000?style=for-the-badge)
+![asyncpg](https://img.shields.io/badge/asyncpg-2C2C2C?style=for-the-badge)
+![Uvicorn](https://img.shields.io/badge/Uvicorn-222222?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/Docker%20Compose-0db7ed?style=for-the-badge&logo=docker&logoColor=white)
 
 ---
 
