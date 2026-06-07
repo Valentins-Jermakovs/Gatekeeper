@@ -23,7 +23,9 @@ from models import User, Role, UserRoles
 # Services:
 import services.password.password_service as password_service
 # Schemas:
-from schemas import UserListResponse
+from schemas import UserListResponse, AuditActions
+# Utils:
+from utils.log_writer import log_audit
 # =====================================================
 
 
@@ -104,10 +106,25 @@ async def change_user_email(
         )
     
     # Update user email
+    old_email = user.email
     user.email = data.email
 
     await db.commit()
     await db.refresh(user)
+
+    await log_audit(
+        db,
+        user_id=user_id,
+        action=AuditActions.USER_CHANGE_EMAIL,
+        entity_type="user",
+        entity_id=user_id,
+        meta={
+            "old_email": old_email,
+            "new_email": data.email
+        }
+    )
+
+    await db.commit()
 
     return await get_user_info(
         user_id=user_id, 
@@ -151,10 +168,25 @@ async def change_user_username(
         )
     
     # Update user username
+    old_username = user.username
     user.username = data.new_username
 
     await db.commit()
     await db.refresh(user)
+
+    await log_audit(
+        db,
+        user_id=user_id,
+        action=AuditActions.USER_CHANGE_USERNAME,
+        entity_type="user",
+        entity_id=user_id,
+        meta={
+            "old_username": old_username,
+            "new_username": data.new_username
+        }
+    )
+
+    await db.commit()
 
     return await get_user_info(
         user_id=user_id, 
@@ -206,6 +238,16 @@ async def change_user_password(
     await db.commit()
     await db.refresh(user)
 
+    await log_audit(
+        db,
+        user_id=user_id,
+        action=AuditActions.USER_CHANGE_PASSWORD,
+        entity_type="user",
+        entity_id=user_id
+    )
+
+    await db.commit()
+
     return await get_user_info(
         user_id=user_id,
         user_roles=user_roles,
@@ -236,6 +278,17 @@ async def set_user_password(
     user.password_hash = await password_service.hash_password(data.password)
 
     await db.commit()
+    await db.refresh(user)
+
+    await log_audit(
+        db,
+        user_id=user_id,
+        action=AuditActions.USER_SET_PASSWORD,
+        entity_type="user",
+        entity_id=user_id
+    )
+
+    await db.commit()
 
     return await get_user_info(
         user_id=user_id,
@@ -254,18 +307,20 @@ async def add_users_roles(
     db: AsyncSession
 ) -> ChangeUsersRolesResponse:
 
-    # Check if user has admin role
+    # Check admin
     if "admin" not in current_user_roles:
         raise HTTPException(403, "Forbidden")
-    
-    # Check if admin is trying to modify own roles
+
     if current_user_id in data.users:
         raise HTTPException(
-        status_code=400,
-        detail="Admin cannot modify own roles"
-    )
+            status_code=400,
+            detail="Admin cannot modify own roles"
+        )
 
-    # Get role
+    # deduplicate input
+    unique_user_ids = set(data.users)
+
+    # get role
     role = (await db.exec(
         select(Role).where(Role.name == data.role)
     )).first()
@@ -273,16 +328,15 @@ async def add_users_roles(
     if not role:
         raise HTTPException(404, "Role not found")
 
-    # Get all users at once
+    # fetch users
     users = (await db.exec(
-        select(User).where(User.id.in_(data.users))
+        select(User).where(User.id.in_(unique_user_ids))
     )).all()
 
-    # Check if all users exist
     found_user_ids = {u.id for u in users}
-    missing_users = set(data.users) - found_user_ids
+    missing_users = unique_user_ids - found_user_ids
 
-    # get existing relations in one query
+    # existing relations
     existing_roles = await db.exec(
         select(UserRoles).where(
             UserRoles.user_id.in_(found_user_ids),
@@ -290,13 +344,11 @@ async def add_users_roles(
         )
     )
 
-    # Create set of existing relations
-    existing_set = {
-        (r.user_id, r.role_id)
-        for r in existing_roles.all()
-    }
+    existing_set = {(r.user_id, r.role_id) for r in existing_roles.all()}
 
-    # Add new relations
+    # APPLY CHANGES
+    added = []
+
     for user in users:
         if (user.id, role.id) in existing_set:
             continue
@@ -306,11 +358,32 @@ async def add_users_roles(
             role_id=role.id
         ))
 
+        added.append(user.id)
+
+    # commit FIRST
+    await db.commit()
+
+    # audit AFTER commit
+    await log_audit(
+        db,
+        user_id=current_user_id,
+        action=AuditActions.ADMIN_ADD_ROLES,
+        entity_type="role",
+        entity_id=role.id,
+        meta={
+            "role": data.role,
+            "added": added,
+            "missing": list(missing_users),
+            "skipped_existing": list(found_user_ids - set(added))
+        }
+    )
+
+    # commit SECOND
     await db.commit()
 
     return ChangeUsersRolesResponse(
-        added_to=list(found_user_ids),
-        skipped_existing=len(existing_set),
+        added_to=added,
+        skipped_existing=len(found_user_ids) - len(added),
         missing_users=list(missing_users)
     )
         
@@ -322,18 +395,20 @@ async def remove_users_roles(
     db: AsyncSession
 ) -> RemoveUsersRolesResponse:
 
-    # Check if user has admin role
+    # Check admin
     if "admin" not in current_user_roles:
         raise HTTPException(403, "Forbidden")
-    
-    # Check if admin is trying to modify own roles
+
     if current_user_id in data.users:
         raise HTTPException(
-        status_code=400,
-        detail="Admin cannot modify own roles"
-    )
+            status_code=400,
+            detail="Admin cannot modify own roles"
+        )
 
-    # Get role
+    # deduplicate input
+    unique_user_ids = set(data.users)
+
+    # get role
     role = (await db.exec(
         select(Role).where(Role.name == data.role)
     )).first()
@@ -341,16 +416,15 @@ async def remove_users_roles(
     if not role:
         raise HTTPException(404, "Role not found")
 
-    # Get all users at once
+    # fetch users
     users = (await db.exec(
-        select(User).where(User.id.in_(data.users))
+        select(User).where(User.id.in_(unique_user_ids))
     )).all()
 
-    # Check if all users exist
     found_user_ids = {u.id for u in users}
-    missing_users = set(data.users) - found_user_ids
+    missing_users = unique_user_ids - found_user_ids
 
-    # get existing relations
+    # existing relations
     existing_roles = await db.exec(
         select(UserRoles).where(
             UserRoles.user_id.in_(found_user_ids),
@@ -358,30 +432,46 @@ async def remove_users_roles(
         )
     )
 
-    # Create set of existing relations
-    existing_map = {
-        r.user_id for r in existing_roles.all()
-    }
-
+    existing_map = {r.user_id for r in existing_roles.all()}
 
     removed_from = []
     skipped_not_existing = []
 
-    # Remove relations
-    for user_id in found_user_ids:
+    # batch delete instead of loop
+    to_remove = []
 
+    for user_id in found_user_ids:
         if user_id not in existing_map:
             skipped_not_existing.append(user_id)
             continue
 
+        to_remove.append(user_id)
+        removed_from.append(user_id)
+
+    if to_remove:
         await db.exec(
             delete(UserRoles).where(
-                UserRoles.user_id == user_id,
+                UserRoles.user_id.in_(to_remove),
                 UserRoles.role_id == role.id
             )
         )
 
-        removed_from.append(user_id)
+    await db.commit()
+
+    # audit AFTER commit (correct state)
+    await log_audit(
+        db,
+        user_id=current_user_id,
+        action=AuditActions.ADMIN_REMOVE_ROLES,
+        entity_type="role",
+        entity_id=role.id,
+        meta={
+            "role": data.role,
+            "removed_from": removed_from,
+            "skipped_not_existing": skipped_not_existing,
+            "missing_users": list(missing_users)
+        }
+    )
 
     await db.commit()
 
@@ -403,12 +493,11 @@ async def change_user_status(
     if "admin" not in current_user_roles:
         raise HTTPException(403, "Forbidden")
 
-    # Check if admin is trying to modify own roles
     if current_user_id in data.users:
         raise HTTPException(
-        status_code=400,
-        detail="Admin cannot modify own roles"
-    )
+            status_code=400,
+            detail="Admin cannot modify own roles"
+        )
 
     target_ids = set(data.users)
 
@@ -422,15 +511,39 @@ async def change_user_status(
     found_user_ids = {u.id for u in users}
     missing_users = target_ids - found_user_ids
 
+    changed = []
+    skipped_already = []
+
     for user in users:
-        if user.active != data.active:
-            user.active = data.active
+        if user.active == data.active:
+            skipped_already.append(user.id)
+            continue
+
+        user.active = data.active
+        changed.append(user.id)
+
+    await db.commit()
+
+    await log_audit(
+        db,
+        user_id=current_user_id,
+        action=AuditActions.ADMIN_CHANGE_STATUS,
+        entity_type="user",
+        entity_id=None,
+        meta={
+            "target_users": list(target_ids),
+            "changed": changed,
+            "skipped_already": skipped_already,
+            "missing": list(missing_users),
+            "active": data.active
+        }
+    )
 
     await db.commit()
 
     return ChangeUserStatusResponse(
-        changed=list(found_user_ids),
-        skipped_not_existing=list(missing_users),
+        changed=changed,
+        skipped_not_existing=skipped_already,
         missing_users=list(missing_users)
     )
 

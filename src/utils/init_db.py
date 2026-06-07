@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from dotenv import load_dotenv
 import os
 # Models:
-from models import UserRoles, RefreshToken, User, Role
+from models import UserRoles, RefreshToken, User, Role, AuditLog
 # Utils:
 from utils.init_db_roles import init_roles
 # =====================================================

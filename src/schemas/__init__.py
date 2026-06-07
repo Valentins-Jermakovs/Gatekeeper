@@ -24,3 +24,5 @@ from .user import (
     UserListResponse
 )
 from .logout import LogoutRequest
+from .audit_helper import AuditActions
+from .audit import AuditLogsResponse, AuditLogResponse
