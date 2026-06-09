@@ -1,8 +1,14 @@
+# =====================================================
+#                       imports
+# =====================================================
+# Libraries:
 from sqlmodel.ext.asyncio.session import AsyncSession
-from models import AuditLog
 from typing import Any
+# Models:
+from models import AuditLog
+# =====================================================
 
-
+# Function for writing audit logs
 async def log_audit(
     db: AsyncSession,
     *,

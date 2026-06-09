@@ -24,4 +24,4 @@ class AuditLog(SQLModel, table=True):
         default_factory=dict
     )
 
-    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(), index=True)

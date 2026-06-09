@@ -1,11 +1,24 @@
+# =====================================================
+#                       imports
+# =====================================================
+# Libraries:
 from sqlmodel import select, desc
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
-from models import AuditLog
-from schemas import AuditLogsResponse, AuditLogResponse
 from io import StringIO
 from fastapi.responses import StreamingResponse
+# Models:
+from models import AuditLog
+# Schemas:
+from schemas import AuditLogsResponse, AuditLogResponse
+# =====================================================
 
+
+# =====================================================
+#                       Business logic
+# =====================================================
+
+# Function for getting latest audit logs
 async def get_latest_audit_logs(
     db: AsyncSession,
     current_user_roles: list[str]
@@ -17,7 +30,7 @@ async def get_latest_audit_logs(
     result = await db.exec(
         select(AuditLog)
         .order_by(desc(AuditLog.created_at))
-        .limit(20)
+        .limit(10)
     )
 
     logs = result.all()
@@ -38,7 +51,7 @@ async def get_latest_audit_logs(
         ]
     )
 
-
+# Function for downloading audit logs
 async def download_audit_logs(
     db: AsyncSession,
     current_user_roles: list[str]
