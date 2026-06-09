@@ -30,15 +30,15 @@
 
 ## Project structure
 
-- `src/` — application source code
-- `src/config/` — database and dependency configuration
-- `src/models/` — SQLModel ORM models
-- `src/schemas/` — request/response data models
-- `src/services/` — business logic for auth, tokens, users, and passwords
-- `src/api/` — API route definitions
-- `src/utils/` — database initialization helpers
-- `compose.yaml` — Docker Compose configuration
-- `.env` — environment configuration
+- src/ — application source code
+- src/config/ — database and dependency configuration
+- src/models/ — SQLModel ORM models
+- src/schemas/ — request/response data models
+- src/services/ — business logic for auth, tokens, users, and passwords
+- src/api/ — API route definitions
+- src/utils/ — database initialization helpers
+- compose.yaml — Docker Compose configuration
+- .env — environment configuration
 
 ---
 
