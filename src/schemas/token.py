@@ -4,9 +4,6 @@
 from pydantic import BaseModel
 # =====================================================
 
-# =====================================================
-#                       Schemas
-# =====================================================
 
 # Token schema for response
 class TokenResponse(BaseModel):

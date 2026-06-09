@@ -4,9 +4,6 @@
 from pydantic import BaseModel, Field, EmailStr
 # =====================================================
 
-# =====================================================
-#                       Schemas
-# =====================================================
 
 # Login schema for authentication
 class LoginRequest(BaseModel):

@@ -24,17 +24,21 @@ async def get_latest_audit_logs(
     current_user_roles: list[str]
 ) -> AuditLogsResponse:
 
+    # Allow access only for administrators
     if "admin" not in current_user_roles:
         raise HTTPException(403, "Forbidden")
 
+    # Fetch the latest 10 audit log entries
     result = await db.exec(
         select(AuditLog)
         .order_by(desc(AuditLog.created_at))
         .limit(10)
     )
 
+    # Retrieve query results
     logs = result.all()
 
+    # Convert database models to API response schema
     return AuditLogsResponse(
         logs=[
             AuditLogResponse(
@@ -57,18 +61,23 @@ async def download_audit_logs(
     current_user_roles: list[str]
 ):
 
+    # Allow access only for administrators
     if "admin" not in current_user_roles:
         raise HTTPException(403, "Forbidden")
 
+    # Fetch all audit log entries ordered by creation date
     result = await db.exec(
         select(AuditLog)
         .order_by(AuditLog.created_at.desc())
     )
 
+    # Retrieve query results
     logs = result.all()
 
+    # Create an in-memory text buffer
     buffer = StringIO()
 
+    # Write audit log entries to the text file
     for log in logs:
         buffer.write(
             f"[{log.created_at}] "
@@ -79,12 +88,15 @@ async def download_audit_logs(
             f"meta={log.meta}\n"
         )
 
+    # Reset cursor position to the beginning of the file
     buffer.seek(0)
 
+    # Return the generated file as a downloadable response
     return StreamingResponse(
         buffer,
         media_type="text/plain",
         headers={
+            # Force browser to download the file
             "Content-Disposition": 'attachment; filename="audit_logs.txt"'
         }
     )
