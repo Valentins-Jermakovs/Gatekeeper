@@ -54,7 +54,7 @@ POSTGRES_PASSWORD=app_password
 POSTGRES_DB=app_db
 DATABASE_URL=postgresql+asyncpg://app_user:app_password@db:5432/app_db
 SECRET_KEY=replace-this-with-a-secure-secret
-ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1
 ```
 
 > When using Docker Compose, the database hostname should be `db` because the service is named `db` in `compose.yaml`.
