@@ -1,6 +1,6 @@
 # Gatekeeper
 
-> **Gatekeeper** is a lightweight auth service built with FastAPI, SQLModel and PostgreSQL. It provides registration, login, logout, refresh-token support, Google OAuth, role-based user management, and async execution.
+> **Gatekeeper** is a lightweight auth service built with FastAPI, SQLModel and PostgreSQL. It provides registration, login, logout, refresh-token support, role-based user management, and async execution.
 
 ---
 
@@ -9,7 +9,6 @@
 - Async FastAPI application with JWT authentication
 - PostgreSQL support via `asyncpg` and `SQLModel`
 - Register, login, logout, refresh token endpoints
-- Google OAuth login and callback flow
 - Role-aware user search and admin user management
 - Docker Compose deployment ready
 - Environment configuration via `.env`
@@ -57,17 +56,6 @@ DATABASE_URL=postgresql+asyncpg://app_user:app_password@db:5432/app_db
 SECRET_KEY=replace-this-with-a-secure-secret
 ALGORITHM=HS256
 ```
-
-### Optional Google OAuth values
-
-```env
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
-FRONTEND_URL=http://localhost:5173/login
-```
-
-> `GOOGLE_REDIRECT_URI` must exactly match the value configured in Google Cloud.
 
 > When using Docker Compose, the database hostname should be `db` because the service is named `db` in `compose.yaml`.
 
@@ -131,8 +119,6 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 | `/auth/register` | POST | Register a new user and return access and refresh tokens |
 | `/auth/login` | POST | Authenticate a user with username/password |
 | `/auth/logout` | POST | Invalidate a refresh token and logout the user |
-| `/auth/google/login` | GET | Redirect to Google OAuth login |
-| `/auth/google/callback` | GET | Handle Google OAuth callback and redirect to frontend |
 | `/token/refresh` | POST | Refresh an access token using a refresh token |
 | `/metrics/stats` | GET | Return CPU and memory usage statistics |
 | `/users/me` | GET | Return the currently authenticated user |
