@@ -14,7 +14,6 @@ from .user import (
     UserEmailRequest, 
     UserPasswordChangeRequest, 
     UserUsernameChangeRequest,
-    SetPasswordRequest,
     ChangeUsersRolesRequest,
     ChangeUsersRolesResponse,
     RemoveUsersRolesResponse,

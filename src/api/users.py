@@ -4,7 +4,6 @@
 # Libraries:
 from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy import func, select
 # Dependencies:
 from config.security import get_current_user
 from config.db_dependency import get_db
@@ -14,19 +13,15 @@ from schemas import (
     UserEmailRequest, 
     UserUsernameChangeRequest,
     UserPasswordChangeRequest,
-    SetPasswordRequest,
     ChangeUsersRolesRequest,
     ChangeUsersRolesResponse,
     RemoveUsersRolesResponse,
     ChangeUserStatusRequest,
     ChangeUserStatusResponse,
-    UsersQueryParams,
     UserListResponse
 )
 # Services
 import services.users.user_service as user_service
-# Models:
-from models import User
 # =========================================================================
 
 
@@ -118,26 +113,6 @@ async def change_user_password_endpoint(
     user_roles = current_user.get("roles")
 
     return await user_service.change_user_password(
-        user_id=user_id,
-        user_roles=user_roles,
-        data=data,
-        db=db
-    )
-
-
-# Endpoint for setting password
-@router.post("/me/set-password", response_model=UserResponse)
-async def set_user_password_endpoint(
-    data: SetPasswordRequest,
-    current_user = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-) -> UserResponse:
-    
-    user_id = current_user.get("sub")
-    user_id = int(user_id)
-    user_roles = current_user.get("roles")
-
-    return await user_service.set_user_password(
         user_id=user_id,
         user_roles=user_roles,
         data=data,

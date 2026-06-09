@@ -31,13 +31,7 @@ class User(SQLModel, table=True):
         max_length=100, 
         index=True, 
         unique=True
-    )  
-
-    google_id: Optional[str] = Field(       # Google OAuth ID
-        default=None, 
-        index=True, 
-        unique=True
-    )  
+    )
 
     auth_provider: str = Field(             # Auth provider
         default="local", 

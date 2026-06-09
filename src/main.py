@@ -26,8 +26,11 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite / SvelteKit dev
+    allow_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://192.168.8.154:3000",
+        "http://localhost:5173"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -40,8 +43,6 @@ load_dotenv()
 secret_key = os.getenv("SECRET_KEY")
 if not secret_key:
     raise RuntimeError("SECRET_KEY environment variable is required for session middleware")
-
-app.add_middleware(SessionMiddleware, secret_key=secret_key)
 
 # Routers
 app.include_router(main_router)

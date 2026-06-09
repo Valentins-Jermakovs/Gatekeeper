@@ -11,7 +11,6 @@ from schemas import (
     UserEmailRequest, 
     UserPasswordChangeRequest, 
     UserUsernameChangeRequest,
-    SetPasswordRequest,
     ChangeUsersRolesRequest,
     ChangeUsersRolesResponse,
     RemoveUsersRolesResponse,
@@ -215,12 +214,7 @@ async def change_user_password(
             status_code=404,
             detail="User not found"
         )
-    
-    if user.password_hash is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Password is not set. Use set-password endpoint."
-        )
+
 
     # verify current password
     if not await password_service.verify_password(
@@ -242,48 +236,6 @@ async def change_user_password(
         db,
         user_id=user_id,
         action=AuditActions.USER_CHANGE_PASSWORD,
-        entity_type="user",
-        entity_id=user_id
-    )
-
-    await db.commit()
-
-    return await get_user_info(
-        user_id=user_id,
-        user_roles=user_roles,
-        db=db
-    )
-
-
-async def set_user_password(
-    user_id: int,
-    user_roles: list[str],
-    data: SetPasswordRequest,
-    db: AsyncSession
-):
-    user = await db.get(User, user_id)
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-
-    if user.password_hash is not None:
-        raise HTTPException(
-            status_code=400,
-            detail="Password is already set"
-        )
-
-    user.password_hash = await password_service.hash_password(data.password)
-
-    await db.commit()
-    await db.refresh(user)
-
-    await log_audit(
-        db,
-        user_id=user_id,
-        action=AuditActions.USER_SET_PASSWORD,
         entity_type="user",
         entity_id=user_id
     )
