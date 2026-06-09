@@ -36,6 +36,7 @@ class UserUsernameChangeRequest(SQLModel):
 class Roles(str, Enum):
     admin = "admin"
     manager = "manager"
+    librarian = "librarian"
 
 # Schema for users and it's roles modifications
 class ChangeUsersRolesRequest(SQLModel):
